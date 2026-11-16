@@ -233,7 +233,7 @@ $('nav').onclick=function(e){var b=e.target.closest('button');if(!b)return;
 
 function init(){
   $('oDate').value=today();$('rDate').value=today();
-  var d=new Date();d.setDate(d.getDate()-30);$('stFrom').value=d.toISOString().slice(0,10);$('stTo').value=today();
+  $('stFrom').value=new Date(Date.parse(today()+'T00:00:00Z')-30*86400000).toISOString().slice(0,10);$('stTo').value=today();
   loadShops().then(loadDay);
 }
 function loadShops(){return api('shops').then(function(r){SHOPS=r;drawPickers();drawShopList()})}
@@ -378,7 +378,7 @@ function drawSfImgs(){$('sfImgs').innerHTML=sfImgs.map(function(u,i){return '<di
 $('sfImgs').onclick=function(e){var x=e.target.closest('[data-x]');if(x){sfImgs.splice(+x.dataset.x,1);drawSfImgs()}};
 function shrink(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
   var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
-  c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};im.onerror=rej;im.src=r.result};r.readAsDataURL(file)})}
+  var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};im.onerror=rej;im.src=r.result};r.readAsDataURL(file)})}
 $('sfFile').onchange=function(){var fs=[].slice.call(this.files),i=0,inp=this;if(!fs.length)return;$('sfSave').disabled=true;
   (function next(){if(i>=fs.length){$('upMsg').textContent='上傳完成，記得按「儲存店家」';$('sfSave').disabled=false;inp.value='';return}
     $('upMsg').innerHTML='<span class="spin"></span> 上傳第 '+(i+1)+' / '+fs.length+' 張…';
