@@ -257,7 +257,12 @@ var LABELS = {
 };
 
 var _cache = {};
-function _ss() { return SpreadsheetApp.getActiveSpreadsheet(); }
+function _ss() {
+  var a = SpreadsheetApp.getActiveSpreadsheet(); if (a) return a;
+  var p = PropertiesService.getScriptProperties(), id = p.getProperty('SS_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  var s = SpreadsheetApp.create('午餐訂便當系統 資料'); p.setProperty('SS_ID', s.getId()); return s;
+}
 function _sheet(t) {
   var ss = _ss(), sh = ss.getSheetByName(SHEET_NAMES[t]);
   if (!sh) {
@@ -355,5 +360,5 @@ function setup() {
   }
   var def = _ss().getSheetByName('工作表1') || _ss().getSheetByName('Sheet1');
   if (def && _ss().getSheets().length > 1 && def.getLastRow() === 0) _ss().deleteSheet(def);
-  Logger.log('完成！已建立工作表與 ' + _all('shops').length + ' 家店。');
+  Logger.log('完成！已建立工作表與 ' + _all('shops').length + ' 家店。資料表網址：' + _ss().getUrl());
 }
