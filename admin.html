@@ -82,7 +82,7 @@ td.n,th.n{text-align:right}
   </div>
 
   <div id="app" class="hide">
-    <div class="head"><h1>🍱 訂便當後台</h1><a href="index.html"><button>看點餐頁</button></a></div>
+    <div class="head"><h1>🍱 訂便當後台 <span id="verTag" class="tag" style="background:#EFEDE6;color:var(--sub);vertical-align:middle"></span></h1><a href="index.html"><button>看點餐頁</button></a></div>
     <div class="nav" id="nav">
       <button data-p="open" class="on">📣 今日開團</button>
       <button data-p="orders">🧾 點餐明細・收款</button>
@@ -193,6 +193,7 @@ td.n,th.n{text-align:right}
         <div class="muted" style="font-size:13px">流標＝結單時沒達到低消。平均金額越高，通常代表大家越愛這家。</div></div>
       <div id="stOut"></div>
     </section>
+    <details class="card pane" style="margin-top:20px"><summary style="cursor:pointer;font-weight:700;color:var(--sub)">📝 版本更新紀錄</summary><div id="verList" style="margin-top:10px"></div></details>
   </div>
 </div>
 <div class="viewer hide" id="viewer">
@@ -201,6 +202,7 @@ td.n,th.n{text-align:right}
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="version.js"></script>
 <script src="config.js"></script>
 <script src="seed.js"></script>
 <script src="core.js"></script>
@@ -225,6 +227,8 @@ function enter(){api('login').then(function(){try{sessionStorage.setItem('lunchP
   .catch(function(e){toast(e.message,1);try{sessionStorage.removeItem('lunchPw')}catch(x){}})}
 $('loginBtn').onclick=function(){PW=$('pw').value;enter()};$('pw').onkeydown=function(e){if(e.key==='Enter'){PW=$('pw').value;enter()}};
 if(PW) enter();
+var VS=window.LUNCH_VERSIONS||[];if(VS[0])$('verTag').textContent='v'+VS[0].v;
+$('verList').innerHTML=VS.map(function(x){return '<div style="padding:8px 0;border-top:1px solid var(--line)"><b>v'+esc(x.v)+'</b> <span class="muted" style="font-size:13px">'+esc(x.date)+'</span><div style="font-size:15px">'+esc(x.note)+'</div></div>'}).join('');
 
 $('nav').onclick=function(e){var b=e.target.closest('button');if(!b)return;
   [].forEach.call($('nav').children,function(x){x.classList.toggle('on',x===b)});
