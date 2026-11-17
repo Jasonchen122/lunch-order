@@ -488,12 +488,18 @@ function drawAfter(){
     var v=H.vote, tot=0; v.choices.forEach(function(c){tot+=v.tally[c]||0});
     var d=new Date(v.target+'T00:00:00Z'), lab=(v.target===H.now.date?'今天':(d.getUTCMonth()+1)+'/'+d.getUTCDate()+'（'+WEEK[d.getUTCDay()]+'）');
     h+='<div class="card pad fadeup"><div class="sec-t" style="margin-bottom:2px">🥣 敲碗！'+lab+'想吃什麼？</div><div class="muted" style="font-size:13px;margin-bottom:10px">投一票給管理員參考</div>'+(function(){var nb=H.groups.filter(function(g){return g.kind==='bento'&&!isActive(g)})[0];return nb?'<div class="muted" style="font-size:13px;margin:-6px 0 10px">'+dayLabel(nb.endAt)+'已經決定吃'+esc(nb.title)+'，先幫'+lab+'敲碗吧！</div>':''})()+'<div class="vote" id="vote">'+
-      v.choices.map(function(c){var n=v.tally[c]||0;return '<div data-v="'+c+'" class="'+(v.mine===c?'me':'')+'">'+(v.mine?'<i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i>':'')+'<span>'+(v.mine===c?'✓ ':'')+c+(v.mine?'　'+n+' 票':'')+'</span></div>'}).join('')+'</div></div>';
+      v.choices.map(function(c){var n=v.tally[c]||0;return '<div data-v="'+c+'" class="'+(v.mine===c?'me':'')+'">'+(v.mine?'<i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i>':'')+'<span>'+(v.mine===c?'✓ ':'')+(c==='其他'?(v.mine?'✏️ 其他':'✏️ 其他（自己填）'):c)+(v.mine?'　'+n+' 票':'')+'</span></div>'}).join('')+'</div>'+
+      '<div id="otherBox" class="row hide" style="margin-top:10px"><input id="otherTx" maxlength="20" placeholder="例如 火鍋、拉麵、早午餐" value="'+esc(v.mineText||'')+'"><button class="primary" id="otherOk" style="white-space:nowrap">送出</button></div>'+
+      (v.mine&&v.others&&v.others.length?'<div class="muted" style="font-size:13px;margin-top:8px">✏️ 大家寫的：'+v.others.map(function(o){return esc(o.text)+(o.n>1?' ×'+o.n:'')}).join('、')+'</div>':'')+'</div>';
   }
   $('after').innerHTML=h;
   if($('vote')) $('vote').onclick=function(e){var d=e.target.closest('[data-v]');if(!d)return;
     if(!me.ext){toast('先在點餐時輸入過分機，才能投票喔',1);var x=document.createElement('div');x.innerHTML='<div class="row" style="margin-top:10px"><input id="vExt" inputmode="numeric" placeholder="輸入你的分機"><button id="vOk" class="primary">確定</button></div>';$('vote').after(x);
       $('vOk').onclick=function(){var v2=$('vExt').value.trim();if(!v2)return;me.ext=v2;saveMe();x.remove();d.click()};return}
+    if(d.dataset.v==='其他'){$('otherBox').classList.remove('hide');$('otherTx').focus();
+      $('otherOk').onclick=function(){var tx=$('otherTx').value.trim();if(!tx){$('otherTx').focus();return toast('寫下你想吃什麼吧',1)}
+        LunchAPI.call('vote',{target:H.vote.target,ext:me.ext,choice:'其他：'+tx}).then(function(r){H.vote=r;drawAfter();toast('收到！TOM 幫你記下「'+tx+'」')}).catch(function(e){toast(e.message,1)})};
+      $('otherTx').onkeydown=function(e){if(e.key==='Enter')$('otherOk').click()};return}
     LunchAPI.call('vote',{target:H.vote.target,ext:me.ext,choice:d.dataset.v}).then(function(r){H.vote=r;drawAfter();toast('收到你的票了！')}).catch(function(e){toast(e.message,1)})};
 }
 

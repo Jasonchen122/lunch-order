@@ -12,7 +12,7 @@ var LunchCore = (function () {
   var LEVELS = [[0, 'Lv1 新手熊'], [1, 'Lv2 便當見習熊'], [15, 'Lv3 午餐達人熊'], [30, 'Lv4 揪團高手熊'], [60, 'Lv5 湯姆熊傳說']];
   var GAMES = { gacha: '午餐扭蛋', whack: '打 TOM' };
   var KIND_ORDER = { bento: 0, drink: 1, other: 2 };
-  var VOTE_CHOICES = ['便當飯類', '麵食水餃', '異國料理', '小吃', '熱炒', '都可以'];
+  var VOTE_CHOICES = ['便當飯類', '麵食水餃', '異國料理', '小吃', '熱炒', '其他'];
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function tp(d) { // 台北時間
@@ -103,10 +103,18 @@ var LunchCore = (function () {
       return cand;
     }
     function voteTally(target, ext) {
-      var tally = {}, mine = '';
+      var tally = {}, mine = '', mineText = '', others = {};
       VOTE_CHOICES.forEach(function (c) { tally[c] = 0; });
-      store.all('votes').forEach(function (v) { if (str(v.target) === target) { tally[str(v.choice)] = (tally[str(v.choice)] || 0) + 1; if (ext && str(v.ext) === str(ext)) mine = str(v.choice); } });
-      return { target: target, choices: VOTE_CHOICES, tally: tally, mine: mine };
+      store.all('votes').forEach(function (v) {
+        if (str(v.target) !== target) return;
+        var ch = str(v.choice), key = ch, txt = '';
+        if (ch.indexOf('其他：') === 0) { key = '其他'; txt = ch.slice(3); }
+        tally[key] = (tally[key] || 0) + 1;
+        if (txt) others[txt] = (others[txt] || 0) + 1;
+        if (ext && str(v.ext) === str(ext)) { mine = key; mineText = txt; }
+      });
+      var ol = Object.keys(others).sort(function (a, b) { return others[b] - others[a]; }).map(function (k) { return { text: k, n: others[k] }; });
+      return { target: target, choices: VOTE_CHOICES, tally: tally, mine: mine, mineText: mineText, others: ol };
     }
     function recap(D, t) {
       var ended = D.groups.filter(function (g) { return g.kind === 'bento' && !g.cancelled && g.mode !== 'link' && stateOf(g, t) === 'ended' && g.endAt >= addDays(t.date, -7); })
@@ -226,7 +234,9 @@ var LunchCore = (function () {
     }
     function vote(p) {
       var ext = str(p.ext), c = str(p.choice), target = str(p.target);
-      if (!ext) err('請先輸入分機'); if (VOTE_CHOICES.indexOf(c) < 0) err('選項錯誤');
+      if (!ext) err('請先輸入分機');
+      if (c === '其他' || c.indexOf('其他：') === 0) { var tx = c.replace(/^其他：?/, '').trim().slice(0, 20); if (!tx) err('請寫下你想吃什麼'); c = '其他：' + tx; }
+      else if (VOTE_CHOICES.indexOf(c) < 0) err('選項錯誤');
       store.removeWhere('votes', function (r) { return str(r.target) === target && str(r.ext) === ext; });
       store.insert('votes', { target: target, ext: ext, choice: c, createdAt: tp(now()).iso });
       return voteTally(target, ext);

@@ -243,7 +243,8 @@ function loadGroups(){return api('adminGroups').then(function(r){GL=r;drawGL();d
 // ---------- 開團：清單 ----------
 function drawVote(){
   function line(v,lab){var tot=0,ks=v.choices.filter(function(c){tot+=v.tally[c]||0;return v.tally[c]}).sort(function(a,b){return v.tally[b]-v.tally[a]});
-    return '<div style="margin-bottom:6px"><b>'+lab+'</b> <span class="muted" style="font-size:13px">'+tot+' 票</span></div><div class="vt">'+(ks.length?ks.map(function(c){return '<span>'+c+' '+v.tally[c]+'</span>'}).join(''):'<span class="muted" style="background:none">還沒有人投票</span>')+'</div>'}
+    return '<div style="margin-bottom:6px"><b>'+lab+'</b> <span class="muted" style="font-size:13px">'+tot+' 票</span></div><div class="vt">'+(ks.length?ks.map(function(c){return '<span>'+c+' '+v.tally[c]+'</span>'}).join(''):'<span class="muted" style="background:none">還沒有人投票</span>')+'</div>'+
+    (v.others&&v.others.length?'<div class="muted" style="font-size:14px;margin-top:6px">✏️ 其他：'+v.others.map(function(o){return esc(o.text)+(o.n>1?' ×'+o.n:'')}).join('、')+'</div>':'')}
   var v=GL.vote, today=GL.voteToday;
   $('voteBox').innerHTML='<div class="sec-t">🗳️ 同事想吃什麼</div>'+(today.target!==v.target&&v.choices.some(function(c){return today.tally[c]})?line(today,'今天（'+md(today.target)+'）')+'<div style="height:10px"></div>':'')+line(v,md(v.target));
 }
