@@ -290,9 +290,13 @@ var COIN_LINES=['🪙 點餐就送熊幣！畫面最下面的金色列可以查�
  '🎰 今天點完餐，記得去轉一下午餐扭蛋\n抽到大吉會灑彩帶，還有 TOM 的冷笑話等你 🐻',
  '🐻 你的分機現在是什麼框？\n銅框 → 銀框 → 金色閃光框 → 彩虹皇冠 👑\n每天一起點餐就能拿熊幣升級，看看誰先當上「湯姆熊傳說」！',
  '🪙 點完餐到畫面最下面的金色列，轉個午餐扭蛋，看看今天是大吉還是末吉～',
- '🔨 今天點餐拿熊幣，午休來打 TOM，20 秒挑戰你的手速！'];
+ '🔨 今天點餐拿熊幣，午休來打 TOM，20 秒挑戰你的手速！',
+ '📸 下班路上看到好吃的？拍下菜單按「推薦新菜單」，被採用就有熊幣！',
+ '🕵️ 徵求午餐探子！公司附近有私房好店，拍菜單推薦給 TOM 吧',
+ '📸 吃膩了嗎？大家推薦的新菜單，管理員都會一家一家看喔',
+ '🌟 推薦的店被選中開團，你就是今天的美食功臣！拍菜單就能推薦'];
 function coinLine(){var d=T().date;
-  if(d<COIN_INTRO_UNTIL)return '🪙 熊幣樂園開張囉！\n今天點便當 +1、點飲料 +1\n湊滿低消那一刻送出的人，再加 1 枚「成團功臣」\n熊幣可以玩午餐扭蛋、打 TOM，存越多等級越高，名字外框會變色喔！';
+  if(d<COIN_INTRO_UNTIL)return '🪙 熊幣樂園開張囉！\n今天點便當 +1、點飲料 +1\n湊滿低消那一刻送出的人，再加 1 枚「成團功臣」\n熊幣可以玩午餐扭蛋、打 TOM，存越多等級越高，名字外框會變色喔！\n📸 在外面看到好吃的？按「推薦新菜單」拍下菜單，也能拿熊幣！';
   var n=0;for(var i=0;i<d.length;i++)n+=d.charCodeAt(i);return COIN_LINES[n%COIN_LINES.length]}
 function lineText(list){
   var t=T(),bd=list.filter(function(g){return g.kind!=='other'}).sort(function(x,y){return (x.kind==='bento'?0:1)-(y.kind==='bento'?0:1)}),ot=list.filter(function(g){return g.kind==='other'}),out=[];
