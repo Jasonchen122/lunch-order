@@ -188,6 +188,8 @@ var eatIdx=0, allDone={};
 function nowHM(){var t=new Date(nowMs()+8*3600e3);return pad(t.getUTCHours())+':'+pad(t.getUTCMinutes())}
 function eating(g){if(!g||g.kind!=='bento'||g.mode==='link'||g.state!=='closed'||!g.success)return false;try{if(LunchAPI.demo&&sessionStorage.getItem('tourEat'))return true}catch(e){}
   return g.closeAt.slice(0,10)!==H.now.date||nowHM()>=LUNCH_AT}
+function isActive(g){return g.state==='open'||g.state==='closed'}
+function dayLabel(dt){var d=dt.slice(0,10);if(d===H.now.date)return '今天';if(d===LunchCore.addDays(H.now.date,1))return '明天';var x=new Date(d+'T00:00:00Z');return (x.getUTCMonth()+1)+'/'+x.getUTCDate()+'（'+WEEK[x.getUTCDay()]+'）'}
 function pct(g){return g.min?Math.min(100,Math.round(g.total.amount/g.min*100)):100}
 
 // ---------- 時鐘 ----------
@@ -218,8 +220,9 @@ function greet(){
     s=b.total.people?'已經有 '+b.total.people+' 位同事上車了'+(b.min&&b.total.amount<b.min?'，還差 '+money(b.min-b.total.amount):'，已經成團囉'):'還沒有人點，當今天第一個勇者吧';}
   else if(b&&eating(b)){var n2=b.people.length,g2=b.people.filter(function(x){return x.picked}).length;t=g2===n2?'全員領取完畢，用餐愉快！':'開飯囉！便當到了 🍱';s=g2===n2?'吃飽飽，下午繼續加油':'辛苦一個早上了，已領 '+g2+' / '+n2+'，快來櫃檯領便當';}
   else if(b){t=b.success?'成團啦！便當在路上 🎉':'差一點點，這次沒成團';s=b.success?'記得到櫃檯領餐、付款':'今天各自填飽肚子，TOM 明天再陪你揪';if(!b.success)img='img/tom_head_gray.png';}
-  else if(H.groups.length){t=hi+'今天有揪團喔';s='看看下面有什麼好吃的';}
-  else if(hr>=14){t='今天吃得開心嗎？明天見！';s='午餐已收攤，TOM 去休息了';img='img/tom_wave.png';cls='wave';}
+  else if(H.groups.some(isActive)){t=hi+'今天有揪團喔';s='看看下面有什麼好吃的';}
+  else if(hr>=14||(H.recap&&H.recap.last&&H.recap.last.date===H.now.date)){var nb=H.groups.filter(function(g){return g.kind==='bento'})[0];t='今天吃得開心嗎？明天見！';s=nb?dayLabel(nb.endAt)+'吃'+nb.title+'，已經可以先看菜單囉':'午餐已收攤，TOM 去休息了';img='img/tom_wave.png';cls='wave';}
+  else if(H.groups.length){var nb2=H.groups[0];t=hi+'今天還沒開團';s=dayLabel(nb2.startAt)+'有「'+nb2.title+'」，先看看菜單吧';img='img/tom_wave.png';cls='wave';}
   else{t=hi+'今天還沒開團';s='先投票告訴管理員你想吃什麼吧';img='img/tom_wave.png';cls='wave';}
   var m=$('mascot');if(m.getAttribute('src')!==img)m.src=img;m.className=cls;m.style.width=img.indexOf('head')>0?'64px':'';
   $('bub').innerHTML='<b>'+esc(t)+'</b><span>'+esc(s)+'</span>';
@@ -227,20 +230,24 @@ function greet(){
 
 // ---------- 卡片 ----------
 function stateTxt(g){
-  if(g.state==='upcoming') return '<span data-cd="'+g.id+'"></span> 後開始・'+fmtDT(g.startAt);
+  if(g.state==='upcoming') return (g.kind==='other'?fmtDT(g.startAt)+' 開始':dayLabel(g.endAt)+' '+g.endAt.slice(11,16)+' 結單')+(g.min?'・低消 '+money(g.min):'');
   if(g.state==='open') return (g.mode==='link'?'線上點餐・':'')+fmtDT(g.endAt)+' 結單・剩 <span data-cd="'+g.id+'"></span>';
   if(g.mode==='link') return '已截止・'+g.marks.length+' 人點好';
   return '已結單・'+(g.success?'成團 🎉':'沒成團');
 }
 function drawCards(){
   if(!H.groups.length){$('cards').innerHTML='';return}
-  $('cards').innerHTML='<div class="sec-t">今天的揪團</div>'+H.groups.map(function(g,i){
+  var act=H.groups.filter(isActive), up=H.groups.filter(function(g){return !isActive(g)});
+  var upT=up.length&&up.every(function(g){return dayLabel(g.startAt)==='明天'})?'明天的揪團・先看看菜單':'接下來的揪團';
+  function cardHTML(g,i){
     var ic=g.images&&g.images.length?'<img src="'+esc(g.images[0])+'" alt="">':(g.emoji||(g.kind==='bento'?'🍱':g.kind==='drink'?'🧋':'✨'));
     var bar=(g.mode==='link'||!g.min||g.state==='upcoming')?'':'<div class="mini"><i style="width:'+pct(g)+'%"></i></div>';
     var sub=g.state==='upcoming'?esc(g.desc||'時間到就可以點囉'):g.mode==='link'?g.marks.length+' 人點好':money(g.total.amount)+(g.min?' / '+money(g.min):'')+'・'+g.total.people+' 人';
-    var go=g.state==='upcoming'?'即將開始':g.state==='open'?(g.mode==='link'?'前往 ↗':'點餐 ›'):'看結果 ›';
+    var go=g.state==='upcoming'?'看菜單 ›':g.state==='open'?(g.mode==='link'?'前往 ↗':'點餐 ›'):'看結果 ›';
     return '<div class="gcard fadeup k-'+g.kind+(sel===g.id?' sel':'')+'" data-g="'+g.id+'" style="animation-delay:'+(i*.06)+'s"><div class="ic">'+ic+'</div><div class="t"><b>'+esc(g.title)+'</b><span>'+stateTxt(g)+'</span><br><span>'+sub+'</span>'+bar+'</div><span class="go">'+go+'</span></div>';
-  }).join('');
+  }
+  $('cards').innerHTML=(act.length?'<div class="sec-t">今天的揪團</div>'+act.map(cardHTML).join(''):'')+
+    (up.length?'<div class="sec-t"'+(act.length?' style="margin-top:18px"':'')+'>'+upT+'</div>'+up.map(function(g,i){return cardHTML(g,i+act.length)}).join(''):'');
 }
 $('cards').onclick=function(e){var c=e.target.closest('[data-g]');if(!c)return;if(sel!==c.dataset.g){sel=c.dataset.g;viewExt='';drawCards();drawDetail(true)}
   setTimeout(function(){$('detail').scrollIntoView({behavior:'smooth',block:'start'})},60)};
@@ -265,7 +272,7 @@ function drawDetail(newSel){
 function drawDash(){
   var g=G(); if(!g) return; var k=g.kind,m=MAS[k],box=$('dash'),h='';
   if(g.state==='upcoming'){
-    h='<div class="nums"><div class="nb"><small>開始時間</small><b style="font-size:20px">'+fmtDT(g.startAt)+'</b></div><div class="nb"><small>距離開始</small><b data-cd="'+g.id+'">--</b></div></div><div class="say">'+m.name+'：還沒開始喔，時間到再來點！</div>';
+    h='<div class="nums"><div class="nb"><small>開放點餐</small><b style="font-size:20px">'+dayLabel(g.startAt)+' '+g.startAt.slice(11,16)+'</b></div><div class="nb"><small>'+(g.kind==='other'?'結束':'結單')+'</small><b style="font-size:20px">'+dayLabel(g.endAt)+' '+g.endAt.slice(11,16)+'</b></div></div><div class="say">'+m.name+'：'+(g.kind==='other'?'還沒開始喔，時間到再來參加！':dayLabel(g.startAt)+'一早就能點，先看 DM 想好要吃什麼！')+'</div>';
   }else if(g.mode==='link'){
     var mk=g.marks.some(function(x){return x.ext===me.ext});
     h='<div class="nums"><div class="nb"><small>'+(g.state==='open'?fmtDT(g.endAt)+' 截止・倒數':'狀態')+'</small><b'+(g.state==='open'?' data-cd="'+g.id+'"':'')+'>'+(g.state==='open'?'--':'已截止')+'</b></div><div class="nb"><small>已點好</small><b>'+g.marks.length+' <em>人</em></b></div></div>'+
@@ -316,7 +323,7 @@ function burst(el){if(!el)return;var cols=['#EF9F27','#1D9E75','#D4537E','#1F96D
 function blank(){return {item:'',qty:1,price:'',sugar:'',ice:'',note:''}}
 function drawCart(){
   var g=G(), box=$('cartCard'); if(!box) return;
-  if(g.state!=='open'){box.innerHTML='<div class="closednote">'+(g.state==='upcoming'?'⏰ 開始之後就可以點餐囉':(eating(g)?'🍱 開飯時間到！看看下面的取餐看板':'🔒 已經結單，下面可以查看大家的點餐和付款狀態'))+'</div>';return}
+  if(g.state!=='open'){box.innerHTML='<div class="closednote">'+(g.state==='upcoming'?'⏰ '+dayLabel(g.startAt)+' '+g.startAt.slice(11,16)+' 開放點餐':(eating(g)?'🍱 開飯時間到！看看下面的取餐看板':'🔒 已經結單，下面可以查看大家的點餐和付款狀態'))+'</div>';return}
   var k=g.kind;
   var rows=cart.map(function(c,i){
     return '<div class="cartrow" data-r="'+i+'"><div class="cr1"><input data-f="item" placeholder="'+(i?'再加一樣，例如 燙青菜':'看 DM 輸入品項')+'" value="'+esc(c.item)+'"><input data-f="price" inputmode="numeric" placeholder="單價 $" value="'+esc(c.price)+'"></div>'+
@@ -366,6 +373,7 @@ function replaceGroup(r){H.groups=H.groups.map(function(g){return g.id===r.id?r:
 // ---------- 名單 ----------
 function drawPeople(){
   var g=G(), box=$('peopleCard'); if(!box) return;
+  box.classList.toggle('hide',g.state==='upcoming');
   if(g.mode==='link'){
     box.innerHTML='<div class="sec-t">🙋 已經點好的同事 <span class="muted" style="font-weight:600;font-size:13px">'+g.marks.length+' 人</span></div>'+(g.marks.length?g.marks.map(function(x){return '<span class="chip'+(x.ext===me.ext?' me':'')+'">'+(x.ext===me.ext?'★ ':'')+esc(x.ext)+(x.name?' <small>'+esc(x.name)+'</small>':'')+'</span>'}).join(''):'<div class="muted">還沒有人標記</div>');return;
   }
@@ -407,12 +415,13 @@ function drawPeople(){
 
 // ---------- 回顧與投票 ----------
 function drawAfter(){
-  var hasBento=H.groups.some(function(g){return g.kind==='bento'}), h='';
+  var hasBento=H.groups.some(function(g){return g.kind==='bento'&&isActive(g)}), h='';
+  var planned=H.groups.some(function(g){return g.kind==='bento'&&g.endAt.slice(0,10)===H.vote.target});
   var r=H.recap&&H.recap.last;
   if(!hasBento&&r){
     h+='<div class="card pad recap fadeup"><div class="l">📸 '+(r.date===H.now.date?'今日':'上次')+'回顧・'+r.date.slice(5).replace('-','/')+'</div><b>'+r.people+' 位同事一起吃了'+esc(r.title)+'</b><span>共 '+money(r.amount)+(r.top?'・人氣王：'+esc(r.top)+' ×'+r.topQty:'')+(H.recap.monthSuccess?'・本月成團 '+H.recap.monthSuccess+' 次 🔥':'')+'</span></div>';
   }
-  if(!hasBento){
+  if(!hasBento&&!planned){
     var v=H.vote, tot=0; v.choices.forEach(function(c){tot+=v.tally[c]||0});
     var d=new Date(v.target+'T00:00:00Z'), lab=(v.target===H.now.date?'今天':(d.getUTCMonth()+1)+'/'+d.getUTCDate()+'（'+WEEK[d.getUTCDay()]+'）');
     h+='<div class="card pad fadeup"><div class="sec-t">🗳️ '+lab+'想吃什麼？<span class="muted" style="font-weight:600;font-size:13px">投一票給管理員參考</span></div><div class="vote" id="vote">'+
@@ -445,6 +454,9 @@ function render(first){
   } else $('detail').innerHTML='';
   if($('dcard')&&g) $('dcard').dataset.st=g.state;
   drawAfter();
+  var wrap=$('cards').parentNode, act=H.groups.some(isActive);
+  if(!act&&$('after').nextElementSibling!==$('cards')) wrap.insertBefore($('after'),$('cards'));
+  if(act&&$('detail').nextElementSibling!==$('after')) wrap.insertBefore($('after'),$('detail').nextSibling);
 }
 function load(first){
   busy=true;
