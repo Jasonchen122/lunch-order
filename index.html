@@ -105,6 +105,22 @@
 .vote div{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;cursor:pointer;background:#fff;position:relative;overflow:hidden}
 .vote div i{position:absolute;left:0;top:0;bottom:0;background:var(--b1);transition:width .8s}
 .vote div span{position:relative}.vote div.me{border-color:var(--b2)}
+.result.bell{background:linear-gradient(160deg,#FFE7B8,#FFF6E6);border:2px solid #F4C778}
+.result.bell h3{color:var(--b4)}.result.bell p{color:#8A5A12}
+.result img.serve{animation:serve 1.4s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes serve{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-8px)}}
+.ringb{display:inline-block;animation:ringb .5s ease-in-out infinite alternate}@keyframes ringb{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
+.eprog{display:flex;align-items:center;gap:10px;margin:6px 4px 10px}.ebar{flex:1;height:14px;border-radius:7px;background:#F1E6D2;overflow:hidden}.ebar i{display:block;height:100%;background:var(--ok2);border-radius:7px;transition:width .6s}
+.eprog b{font-size:18px;white-space:nowrap}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.tk{border-radius:14px;padding:8px 6px;text-align:center;border:2px solid #F4C778;background:var(--b1);transition:.3s;cursor:pointer}
+.tk b{display:block;font-size:20px}.tk b i{font-style:normal;font-size:14px}.tk small{display:block;font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk span{font-size:12px;font-weight:800;color:var(--b4)}
+.tk.wait{animation:wiggle 2.4s ease-in-out infinite}@keyframes wiggle{0%,90%,100%{transform:none}93%{transform:rotate(-4deg)}96%{transform:rotate(4deg)}}
+.tk.got{border-color:#C0DD97;background:var(--ok1)}.tk.got span{color:var(--ok4)}
+.tk.me{box-shadow:0 0 0 3px var(--b2)}.tk.sel{outline:3px solid var(--ink)}
+.nudge{margin-top:12px;background:var(--no1);color:var(--no4);border-radius:12px;padding:10px 12px;font-weight:800;font-size:15px}.nudge.ok{background:var(--ok1);color:var(--ok4)}
+.mybar{display:flex;gap:10px;align-items:center;background:var(--info1);color:var(--info4);border-radius:14px;padding:10px 12px;font-weight:800;margin-top:12px}.mybar img{width:40px}.mybar.got{background:var(--ok1);color:var(--ok4)}
 .foot{text-align:center;padding:16px 0 8px}
 .foot a{color:var(--mute);font-size:13px;text-decoration:none}
 .foot div{color:var(--mute);font-size:12px;margin-top:4px}
@@ -162,6 +178,12 @@ function fmtDT(dt){var d=new Date(ms(dt)+8*3600e3);var today=new Date(nowMs()+8*
 function left(t){var l=Math.max(0,t),d=Math.floor(l/864e5),h=Math.floor(l%864e5/36e5),m=Math.floor(l%36e5/6e4),s=Math.floor(l%6e4/1e3);
   return d?d+' 天 '+h+' 小時':(h?h+':':'')+pad(m)+':'+pad(s)}
 function saveMe(){try{localStorage.setItem('lunchMe',JSON.stringify(me))}catch(e){}}
+var LUNCH_AT=(window.LUNCH_CONFIG&&window.LUNCH_CONFIG.lunchTime)||'12:30';
+var EAT_LINES=['辛苦一個早上了，便當在等你！','肚子咕嚕叫是正常的，快來領便當','工作先放一邊，吃飽才有力氣拚下午','便當熱騰騰，晚來就變溫溫的喔','TOM 已經先聞到香味了，快來！','今天的午餐，是早上努力的獎勵'];
+var eatIdx=0, allDone={};
+function nowHM(){var t=new Date(nowMs()+8*3600e3);return pad(t.getUTCHours())+':'+pad(t.getUTCMinutes())}
+function eating(g){if(!g||g.kind!=='bento'||g.mode==='link'||g.state!=='closed'||!g.success)return false;try{if(LunchAPI.demo&&sessionStorage.getItem('tourEat'))return true}catch(e){}
+  return g.closeAt.slice(0,10)!==H.now.date||nowHM()>=LUNCH_AT}
 function pct(g){return g.min?Math.min(100,Math.round(g.total.amount/g.min*100)):100}
 
 // ---------- 時鐘 ----------
@@ -179,6 +201,7 @@ function tick(){
   if(need&&!busy) load();
 }
 setInterval(tick,1000);
+setInterval(function(){var e=document.getElementById('eatSay');if(e&&e.textContent.indexOf('祝大家')<0){eatIdx++;e.textContent=EAT_LINES[eatIdx%EAT_LINES.length]}},4500);
 
 // ---------- 招呼 ----------
 function greet(){
@@ -189,6 +212,7 @@ function greet(){
   if(b&&b.state==='open'){var l=ms(b.endAt)-nowMs();
     t=l<15*6e4?'最後 '+Math.ceil(l/6e4)+' 分鐘！快上車':hi+'今天 TOM 想吃'+b.title;
     s=b.total.people?'已經有 '+b.total.people+' 位同事上車了'+(b.min&&b.total.amount<b.min?'，還差 '+money(b.min-b.total.amount):'，已經成團囉'):'還沒有人點，當今天第一個勇者吧';}
+  else if(b&&eating(b)){var n2=b.people.length,g2=b.people.filter(function(x){return x.picked}).length;t=g2===n2?'全員領取完畢，用餐愉快！':'開飯囉！便當到了 🍱';s=g2===n2?'吃飽飽，下午繼續加油':'辛苦一個早上了，已領 '+g2+' / '+n2+'，快來櫃檯領便當';}
   else if(b){t=b.success?'成團啦！便當在路上 🎉':'差一點點，這次沒成團';s=b.success?'記得到櫃檯領餐、付款':'今天各自填飽肚子，TOM 明天再陪你揪';if(!b.success)img='img/tom_head_gray.png';}
   else if(H.groups.length){t=hi+'今天有揪團喔';s='看看下面有什麼好吃的';}
   else if(hr>=14){t='今天吃得開心嗎？明天見！';s='午餐已收攤，TOM 去休息了';img='img/tom_wave.png';cls='wave';}
@@ -253,11 +277,18 @@ function drawDash(){
       var t=!g.min?'今天沒有低消，放心點！':p>=100?'到啦！已經成團 🎉':p>=80?'快到了！再揪一位同事':p>=50?'過半了，衝呀！':g.total.people?'我先出發，等你們上車':'還沒人點，當第一個勇者吧';
       if(g.min&&p<100) t+='（還差 '+money(gap)+'，約 '+Math.max(1,Math.ceil(gap/avg))+' 份）';
       h+='<div class="say'+(p>=100?' ok':'')+'">'+m.name+'：'+esc(t)+'</div>';
+    }else if(eating(g)){
+      var n=g.people.length, got=g.people.filter(function(x){return x.picked}).length, all=n&&got===n;
+      h+='<div class="result bell" id="res">'+(all?'<img class="big" src="img/tom_wave.png" alt="TOM">':'<img class="big serve" src="img/tom_full.png" alt="TOM">')+
+        '<h3>'+(all?'全員領取完畢！':'<span class="ringb">🔔</span> 開飯囉！便當到了')+'</h3><p id="eatSay">'+(all?'TOM 祝大家用餐愉快，下午繼續加油':EAT_LINES[eatIdx%EAT_LINES.length])+'</p>'+
+        '<div class="eprog"><div class="ebar"><i style="width:'+(n?Math.round(got/n*100):0)+'%"></i></div><b>已領 '+got+' / '+n+'</b></div></div>';
+      if(all&&!allDone[g.id]){allDone[g.id]=1;setTimeout(function(){burst($('dcard'))},300)}
     }else{
       var ok=g.success, picked=g.people.filter(function(x){return x.picked}).length, paidN=g.people.filter(function(x){return x.paid}).length;
       h+='<div class="result '+(ok?'ok':'no')+'" id="res"><img class="'+(ok?'big':'sad')+'" src="'+(ok?m.big:m.sad)+'" alt="'+m.name+'">'+
         '<h3>'+(ok?'成團！'+m.name+' 開心到跳起來':'差一點點⋯這次沒成團')+'</h3><p>'+(ok?(k==='other'?'謝謝大家參加，記得付款、領取':'在路上了，記得到櫃檯領取、付款'):'還差 '+money(gap)+'，'+m.name+' 下次再陪大家揪')+'</p>'+
-        (ok?'<div class="pp"><span>已付款 '+paidN+' / '+g.people.length+'</span><span>已領取 '+picked+' / '+g.people.length+'</span></div>':'')+'</div>';
+        (ok?'<div class="pp"><span>已付款 '+paidN+' / '+g.people.length+'</span><span>已領取 '+picked+' / '+g.people.length+'</span></div>':'')+
+        (ok&&k==='bento'?'<p style="margin:0 0 8px;font-weight:700;color:var(--ok4)">⏰ '+LUNCH_AT+' 開飯，TOM 會叫大家來領便當</p>':'')+'</div>';
     }
   }
   box.innerHTML=h;
@@ -281,7 +312,7 @@ function burst(el){if(!el)return;var cols=['#EF9F27','#1D9E75','#D4537E','#1F96D
 function blank(){return {item:'',qty:1,price:'',sugar:'',ice:'',note:''}}
 function drawCart(){
   var g=G(), box=$('cartCard'); if(!box) return;
-  if(g.state!=='open'){box.innerHTML='<div class="closednote">'+(g.state==='upcoming'?'⏰ 開始之後就可以點餐囉':'🔒 已經結單，下面可以查看大家的點餐和付款狀態')+'</div>';return}
+  if(g.state!=='open'){box.innerHTML='<div class="closednote">'+(g.state==='upcoming'?'⏰ 開始之後就可以點餐囉':(eating(g)?'🍱 開飯時間到！看看下面的取餐看板':'🔒 已經結單，下面可以查看大家的點餐和付款狀態'))+'</div>';return}
   var k=g.kind;
   var rows=cart.map(function(c,i){
     return '<div class="cartrow" data-r="'+i+'"><div class="cr1"><input data-f="item" placeholder="'+(i?'再加一樣，例如 燙青菜':'看 DM 輸入品項')+'" value="'+esc(c.item)+'"><input data-f="price" inputmode="numeric" placeholder="單價 $" value="'+esc(c.price)+'"></div>'+
@@ -335,6 +366,19 @@ function drawPeople(){
     box.innerHTML='<div class="sec-t">🙋 已經點好的同事 <span class="muted" style="font-weight:600;font-size:13px">'+g.marks.length+' 人</span></div>'+(g.marks.length?g.marks.map(function(x){return '<span class="chip'+(x.ext===me.ext?' me':'')+'">'+(x.ext===me.ext?'★ ':'')+esc(x.ext)+(x.name?' <small>'+esc(x.name)+'</small>':'')+'</span>'}).join(''):'<div class="muted">還沒有人標記</div>');return;
   }
   var ps=g.people.slice().sort(function(a,b){return (b.ext===me.ext)-(a.ext===me.ext)});
+  if(eating(g)){
+    var left=g.people.filter(function(x){return !x.picked}), mp=g.people.filter(function(x){return x.ext===me.ext})[0];
+    var hb='<div class="sec-t" style="margin-bottom:2px">📋 取餐看板</div><div class="muted" style="font-size:13px;margin-bottom:10px">綠色＝已領・橘色＝還沒領・💰＝還沒付款</div><div class="board">'+
+      ps.map(function(p){return '<div class="tk '+(p.picked?'got':'wait')+(p.ext===me.ext?' me':'')+(p.ext===viewExt?' sel':'')+'" data-x="'+esc(p.ext)+'"><b>'+esc(p.ext)+(p.paid?'':' <i>💰</i>')+'</b><small>'+(esc(p.name)||'&nbsp;')+'</small><span>'+(p.picked?'✓ 已領':'待領取')+'</span></div>'}).join('')+'</div>'+
+      (left.length?'<div class="nudge">⏰ 還有 '+left.length+' 位還沒領：'+left.map(function(p){return esc(p.ext)+(p.name?' '+esc(p.name):'')}).join('、')+'</div>':'<div class="nudge ok">🎉 便當全部領完了，謝謝大家！</div>')+
+      (mp?'<div class="mybar'+(mp.picked?' got':'')+'"><img src="img/tom_head.png" alt=""><span>'+(mp.picked?'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'已經領了，好好享用！':'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'在櫃檯等你'+(mp.paid?'':'，記得帶 '+money(mp.unpaid)))+'</span></div>':'');
+    var pv=g.people.filter(function(x){return x.ext===viewExt})[0];
+    if(pv) hb+='<div class="pview"><div style="font-weight:800;margin-bottom:6px">分機 '+esc(pv.ext)+(pv.name?'（'+esc(pv.name)+'）':'')+'</div>'+pv.items.map(function(i){return '<div class="ln"><span>'+esc(i.item)+' × '+i.qty+'</span><span>'+money(i.amount)+'</span></div>'}).join('')+
+      '<div class="paybar '+(pv.paid?'paid':'unpaid')+'"><span>'+(pv.paid?'<span class="stamp">已付款</span>謝謝你！':'待付款・請交現金給管理員')+'</span><b>'+money(pv.paid?pv.total:pv.unpaid)+'</b></div></div>';
+    box.innerHTML=hb;
+    box.onclick=function(e){var c=e.target.closest('[data-x]');if(c){viewExt=viewExt===c.dataset.x?'':c.dataset.x;drawPeople()}};
+    return;
+  }
   var h='<div class="sec-t">📋 '+(g.state==='closed'?'大家點了什麼':'已經點餐')+' <span class="muted" style="font-weight:600;font-size:13px">'+g.people.length+' 人・名字旁 ✓ 代表已付款</span></div>';
   h+=ps.length?'<div>'+ps.map(function(p){return '<span class="chip'+(p.ext===me.ext?' me':'')+(p.ext===viewExt?' on':'')+'" data-x="'+esc(p.ext)+'">'+(p.ext===me.ext?'★ ':'')+esc(p.ext)+(p.name?' <small>'+esc(p.name)+'</small>':'')+(p.paid?' <span class="pd">✓</span>':'')+'</span>'}).join('')+'</div>':'<div class="muted">還沒有人點餐，當第一個吧！</div>';
   var p=g.people.filter(function(x){return x.ext===viewExt})[0];
@@ -420,15 +464,19 @@ if(LunchAPI.demo){
   function nowDT(m){return new Date(Date.now()+8*3600e3+(m||0)*6e4).toISOString().slice(0,16)}
   var tour=document.createElement('div');tour.className='tour min';document.body.style.paddingBottom='80px';
   tour.innerHTML='<div class="th"><img src="img/tom_head.png" alt="">🎬 體驗模式<span style="margin-left:auto;font-size:12px">點我展開</span></div><div class="tb"><small>按按看，TOM 會跟著動</small>'+
-    '<button data-t="add">🧑‍🍳 模擬一位同事點餐</button><button data-t="ok">🎉 快轉到結單（成團）</button><button data-t="no">💔 快轉到結單（沒成團）</button><button data-t="end">🌙 快轉到下午收攤</button><button data-t="reset">🔄 重新開始</button></div>';
+    '<button data-t="add">🧑‍🍳 模擬一位同事點餐</button><button data-t="ok">🎉 快轉到結單（成團）</button><button data-t="no">💔 快轉到結單（沒成團）</button><button data-t="eat">🔔 快轉到 12:30 開飯</button><button data-t="pick">🙋 模擬一位同事領便當</button><button data-t="end">🌙 快轉到下午收攤</button><button data-t="reset">🔄 重新開始</button></div>';
   document.body.appendChild(tour);
   tour.querySelector('.th').onclick=function(){tour.classList.toggle('min');this.lastChild.textContent=tour.classList.contains('min')?'點我展開':'收起 ▾'};
   try{var ts=sessionStorage.getItem('tourSel');if(ts)sel=ts;sessionStorage.removeItem('tourSel')}catch(e){}
   var NAMES=[['301','小明'],['302','阿美'],['303',''],['304','Kevin'],['305','佩佩'],['306',''],['307','大雄'],['308','Linda']],ITEMS={bento:[['蔥油溫泉雞',135],['奶油蒜香雞',140],['七味照燒雞',140],['滿漢大餐',250],['燙青菜',50]],drink:[['四季春',45],['珍珠奶茶',60]],other:[['原味雞蛋糕',60],['巧克力雞蛋糕',70]]};
   var ni=0;
   tour.querySelector('.tb').onclick=function(e){var b=e.target.closest('[data-t]');if(!b)return;var g=G(),t=b.dataset.t;
-    if(t==='reset'){try{sessionStorage.removeItem('tourEnd')}catch(z){}LunchAPI.resetDemo();try{localStorage.removeItem('lunchMe')}catch(x){}location.reload();return}
+    if(t==='reset'){try{sessionStorage.removeItem('tourEnd');sessionStorage.removeItem('tourEat')}catch(z){}LunchAPI.resetDemo();try{localStorage.removeItem('lunchMe')}catch(x){}location.reload();return}
     if(t==='end'){edit(function(db){var d=nowDT(-1);db.groups.forEach(function(x){if(x.endAt.slice(0,10)<=d.slice(0,10)||x.kind!=='other'){x.endAt=x.endAt<d?x.endAt:nowDT(-3);x.closeAt=d}else{x.startAt=nowDT(10*1440)}})});try{sessionStorage.setItem('tourEnd','1')}catch(z){}return}
+    if(t==='eat'){try{sessionStorage.setItem('tourEat','1')}catch(z){}edit(function(db){var x=db.groups.filter(function(y){return y.kind==='bento'&&y.closeAt>nowDT(0)})[0];if(!x)return;x.endAt=nowDT(-1);x.closeAt=nowDT(180);var tot=0;db.orders.forEach(function(o){if(o.groupId===x.id)tot+=+o.amount});if(tot<+x.min)x.min=String(Math.floor(tot/100)*100)});return}
+    if(t==='pick'){var bg=H.groups.filter(function(y){return y.kind==='bento'&&eating(y)})[0];if(!bg)return toast('先按「快轉到 12:30 開飯」',1);
+      var w=bg.people.filter(function(p){return !p.picked})[0];if(!w)return toast('大家都領完了！',1);
+      LunchAPI.call('setPicked',{pw:'1234',groupId:bg.id,ext:w.ext,value:true}).then(function(){toast((w.name||'分機 '+w.ext)+' 領走便當了');load(false)});return}
     if(!g)return toast('先在上面選一個揪團',1);
     if(t==='add'){if(g.state!=='open'||g.mode==='link')return toast('這團現在不能點，先選「天菜溫泉雞」或按重新開始',1);
       var who=NAMES[ni++%NAMES.length],its=ITEMS[g.kind],it=its[Math.floor(Math.random()*its.length)],items=[{item:it[0],qty:1,price:it[1]}];

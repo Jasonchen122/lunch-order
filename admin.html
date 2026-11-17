@@ -142,7 +142,7 @@ td.n,th.n{text-align:right}
       <div class="kpis" id="kpis"></div>
       <div class="card" id="payList"></div>
       <div class="row" style="flex-wrap:wrap;margin-bottom:12px">
-        <button class="primary" id="copyShop">📋 複製給店家的訂單彙總</button><button id="addO">＋ 代同事點餐</button><button id="csv">⬇ 匯出 CSV</button><button id="refresh">↻ 重新整理</button>
+        <button class="primary" id="copyShop">📋 複製給店家的訂單彙總</button><button id="copyPick">📣 LINE 取餐提醒</button><button id="addO">＋ 代同事點餐</button><button id="csv">⬇ 匯出 CSV</button><button id="refresh">↻ 重新整理</button>
       </div>
       <pre class="line hide" id="shopText"></pre>
       <div class="card pad hide" id="aoBox">
@@ -371,6 +371,10 @@ $('copyShop').onclick=function(){if(!CUR||CUR.mode==='link')return toast('線上
   if(!n)return toast('還沒有點餐',1);
   var t=['【'+CUR.title+'】'+md(CUR.endAt)].concat(Object.keys(gq).map(function(k){return '・'+k+' × '+gq[k]})).concat(['共 '+n+' 份，約 '+money(a)]).join('\n');
   $('shopText').textContent=t;$('shopText').classList.remove('hide');copy(t,'已複製，可以貼給店家或照著唸')};
+$('copyPick').onclick=function(){if(!CUR||CUR.mode==='link')return toast('請先選一個便當團',1);
+  var left=CUR.people.filter(function(p){return !p.picked});
+  var t=left.length?'🍱 開飯囉！'+CUR.title+'便當到了\n辛苦一個早上，快來櫃檯領便當～\n\n還沒領的同事：\n'+left.map(function(p){return '・'+p.ext+(p.name?' '+p.name:'')+'（'+p.items.map(function(i){return i.item}).join('、')+'）'+(p.paid?'':'　💰 '+money(p.unpaid))}).join('\n')+'\n\nTOM 在櫃檯等你們 🐻':'🍱 '+CUR.title+'的便當全部領完了，謝謝大家，用餐愉快！';
+  $('shopText').textContent=t;$('shopText').classList.remove('hide');copy(t,'取餐提醒已複製，貼到 LINE 群組吧')};
 $('csv').onclick=function(){if(!CUR)return;var rows=[['揪團','分機','稱呼','品項','數量','單價','金額','甜度','冰塊','備註','已付款','已領取']];
   CUR.rows.forEach(function(o){var p=CUR.people.filter(function(x){return x.ext===o.ext})[0];rows.push([CUR.title,o.ext,p?p.name:'',o.item,o.qty,o.price,o.amount,o.sugar,o.ice,o.note,o.paid?'是':'',o.picked?'是':''])});
   var csv='﻿'+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
