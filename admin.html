@@ -493,11 +493,14 @@ function drawRecs(){
     return '<div class="rc'+(r.status==='new'?' new':'')+'"><div class="who"><span>🙋 分機 <b style="color:var(--ink);font-size:15px">'+esc(r.ext)+'</b> '+esc(r.name)+'・'+t+'</span><span class="rst '+r.status+'">'+RST[r.status]+'</span></div>'+
       '<h3>'+(esc(r.shop)||'<span class="muted">（沒有寫店名）</span>')+'</h3><div class="ph">'+(r.phone?'📞 '+esc(r.phone):'沒有電話')+(r.note?'・「'+esc(r.note)+'」':'')+'</div>'+
       '<div class="imgs">'+r.images.map(function(u,i){return '<img src="'+esc(u)+'" data-rv="'+r.id+'" data-i="'+i+'" alt="菜單">'}).join('')+'</div>'+
-      (r.status!=='adopted'?'<div class="bt"><button class="adopt" data-ad="'+r.id+'">✅ 加入店家 DM</button>'+(r.status==='new'?'<button data-kp="'+r.id+'">🙏 先收著</button>':'<button data-nw="'+r.id+'">↩ 標回新推薦</button>')+'</div><div id="af_'+r.id+'"></div>':'')+'</div>';
+      (r.status!=='adopted'?'<div class="bt"><button class="adopt" data-ad="'+r.id+'">✅ 加入店家 DM</button>'+(r.status==='new'?'<button data-kp="'+r.id+'">🙏 先收著</button>':'<button data-nw="'+r.id+'">↩ 標回新推薦</button>')+'<button data-dr="'+r.id+'" style="color:var(--no2);flex:none;min-width:0">🗑 刪除</button></div><div id="af_'+r.id+'"></div>':'<div class="bt"><button data-dr="'+r.id+'" style="color:var(--no2);flex:none;min-width:0">🗑 刪除紀錄</button></div>')+'</div>';
   }).join(''):'<div class="card pad muted">'+(recF==='new'?'目前沒有新的推薦，鼓勵同事在外面看到好吃的就拍下來吧！':'沒有資料')+'</div>';
 }
 $('recList').onclick=function(e){
   var v=e.target.closest('[data-rv]');if(v){var r=RECS.filter(function(x){return x.id===v.dataset.rv})[0];openViewer((r.shop||'推薦菜單')+'（分機 '+r.ext+'）',r.images);return}
+  var dr=e.target.closest('[data-dr]');if(dr){var x=RECS.filter(function(y){return y.id===dr.dataset.dr})[0];
+    ask('確定刪除分機 '+x.ext+(x.shop?'「'+x.shop+'」':'')+' 這則推薦？'+(x.status==='adopted'?'（已加入的店家 DM 不受影響）':''),'刪除').then(function(ok){if(!ok)return;
+      api('deleteRec',{id:x.id}).then(function(r){RECS=r;recBadge(r.filter(function(y){return y.status==='new'}).length);drawRecs();toast('已刪除')}).catch(function(err){toast(err.message,1)})});return}
   var kp=e.target.closest('[data-kp]'),nw=e.target.closest('[data-nw]');
   if(kp||nw){api('setRec',{id:(kp||nw).dataset[kp?'kp':'nw'],status:kp?'kept':'new'}).then(function(r){RECS=r;recBadge(r.filter(function(x){return x.status==='new'}).length);drawRecs();toast(kp?'先收著了':'已標回新推薦')});return}
   var ad=e.target.closest('[data-ad]');if(ad){var id=ad.dataset.ad,box=$('af_'+id);if(box.innerHTML){box.innerHTML='';return}

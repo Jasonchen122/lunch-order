@@ -374,6 +374,7 @@ var LunchCore = (function () {
       login: function () { return { ok: true }; },
       adminGroups: adminGroups,
       recs: function () { return recs(); }, setRec: setRec, adoptRec: adoptRec,
+      deleteRec: function (p) { store.remove('recs', 'id', str(p.id)); return recs(); },
       adminGroup: function (p) { return adminGroup(str(p.id)); },
       saveGroup: function (p) { return saveGroup(p.group || {}); },
       cancelGroup: function (p) { return cancelGroup(str(p.id)); },
