@@ -74,7 +74,7 @@
     if (h0.ok) store.all('votes').forEach(function (v) { if (!v.target) store.update('votes', 'ext', v.ext, { target: h0.data.vote.target }); });
   }
 
-  var GET_ACTIONS = { home: 1, group: 1, shopsPublic: 1, points: 1 };
+  var GET_ACTIONS = { home: 1, group: 1, shopsPublic: 1, points: 1, history: 1 };
   function call(action, params) {
     params = params || {}; params.action = action;
     if (demo) {

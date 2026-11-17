@@ -162,7 +162,38 @@
 .coinbar .plus{position:absolute;left:14px;top:-32px;background:#fff;border:2px solid #F4C778;border-radius:999px;padding:2px 10px;font-weight:900;color:#BA7517;animation:crise 2.2s ease-in-out forwards}
 @keyframes crise{0%{opacity:0;transform:translateY(10px)}20%,75%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8px)}}
 .cpop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#fff;border:2px solid #F4C778;border-radius:22px;padding:16px 22px;text-align:center;box-shadow:0 10px 30px rgba(58,42,30,.25);z-index:90;animation:cpop 2.4s ease forwards;pointer-events:none;width:250px}
-.cpop img{width:70px;animation:cspin 1s linear infinite}.cpop b{display:block;font-size:22px;color:#BA7517}.cpop span{font-size:13px;color:var(--sub)}
+.cpop img{width:70px;animation:cspin 1s linear infinite}
+.cpop .lvup{width:190px;max-width:100%;animation:lvpop .9s cubic-bezier(.3,1.6,.5,1) both;display:block;margin:0 auto 6px}
+.cpop.up{width:280px;background:#2A2340;border-color:#6B5BD6}.cpop.up b{color:#FFD54A}.cpop.up span{color:#E9E4FF}
+@keyframes lvpop{0%{transform:scale(.2) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(-2deg)}}
+/* 大家最愛／我上次吃什麼 */
+.throw{display:flex;gap:10px;padding:12px 14px 0;align-items:stretch}
+.throw .thumbs{padding:0;flex:0 1 auto;max-width:42%}
+.fav{flex:1;background:linear-gradient(160deg,#FFF6D6,#FFE7B8);border:2px solid #F4C778;border-radius:14px;padding:7px 9px 0;cursor:pointer;display:flex;flex-direction:column;min-height:86px}
+.fav .t{font-size:12px;font-weight:900;color:#8A5A12;display:flex;justify-content:space-between}
+.pod{display:flex;align-items:flex-end;gap:5px;margin-top:auto}
+.pd{flex:1;text-align:center;min-width:0}
+.pd .nm{font-size:12px;font-weight:800;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:2px;word-break:break-all}
+.pd .bl{border-radius:8px 8px 0 0;color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.05}
+.pd .bl small{font-size:10px;font-weight:700;opacity:.95}
+.pd.g1 .bl{height:40px;background:linear-gradient(180deg,#FFD54A,#E0A10E)}.pd.g2 .bl{height:30px;background:linear-gradient(180deg,#D7DEE5,#9AA5B1)}.pd.g3 .bl{height:22px;background:linear-gradient(180deg,#E8B98C,#C98A54)}
+.pd.g1 .nm:before{content:"👑 ";}
+.fav.new{background:linear-gradient(160deg,#EAFBF4,#C9F0DF);border-color:#9FE1CB;flex-direction:row;align-items:center;gap:8px;padding:8px 10px;cursor:default}
+.fav.new img{width:44px;flex:none}.fav.new b{display:block;color:#085041;font-size:14px}.fav.new span{font-size:12px;color:#0F6E56}
+.lastbtn{margin-left:auto;background:linear-gradient(180deg,#FFF1DA,#FFD889);border:2px solid #D9A24A;color:#633806;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:800;box-shadow:0 3px 0 #D9A24A;white-space:nowrap}
+.lastbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #D9A24A}
+.hh{display:flex;gap:10px;align-items:center;margin-bottom:10px}.hh img{width:52px;flex:none}.hh b{font-size:18px;display:block}.hh span{font-size:12px;color:var(--sub)}
+.visit{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.visit .d{font-size:12px;color:var(--sub);display:flex;justify-content:space-between}
+.visit .l{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
+.again{width:100%;margin-top:6px;background:#1D9E75;border:0;color:#fff;border-radius:12px;padding:9px;font-weight:800}
+.rk{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 10px;margin-bottom:6px}
+.rk .n{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;flex:none}
+.rk .x{flex:1;min-width:0}.rk .x b{display:block}.rk .x span{font-size:12px;color:var(--sub)}
+.rk .bar{height:6px;border-radius:3px;background:#F1E6D2;margin-top:3px;overflow:hidden}.rk .bar i{display:block;height:100%;background:#EF9F27}
+.hint{font-size:12px;color:var(--sub);text-align:center;margin:6px 0}
+.addb{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:7px 10px;font-weight:800;white-space:nowrap}
+.askin{width:100%;font-size:22px;text-align:center;letter-spacing:4px}.cpop b{display:block;font-size:22px;color:#BA7517}.cpop span{font-size:13px;color:var(--sub)}
 @keyframes cpop{0%{opacity:0;transform:translate(-50%,-40%) scale(.7)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%)}}
 .csheet-bg{position:fixed;inset:0;background:rgba(30,22,15,.45);z-index:80;opacity:0;pointer-events:none;transition:opacity .3s}
 .csheet-bg.open{opacity:1;pointer-events:auto}
@@ -241,6 +272,8 @@
 <div class="csheet-bg" id="rsBg"></div>
 <div class="csheet" id="rs"></div>
 <div class="csheet" id="cs"></div>
+<div class="csheet-bg" id="hsBg"></div>
+<div class="csheet" id="hs"></div>
 <div class="toast" id="toast"></div>
 
 <script src="version.js"></script>
@@ -356,13 +389,53 @@ function drawDetail(newSel){
   var desc=[g.desc,g.shopNote].filter(Boolean).join('・');
   var h='<div class="card k-'+k+' fadeup" id="dcard"><img class="bearwm" src="img/logo_frame.png" alt="">'+
     '<div class="dhead"><div style="flex:1"><span class="kind">'+(g.emoji||KIND[k].split(' ')[0])+' '+KIND[k].split(' ')[1]+(g.mode==='link'?'・線上點餐':'')+'</span><h2>'+esc(g.title)+'</h2>'+(desc?'<p>'+esc(desc)+'</p>':'')+'</div>'+
-    (th?'<button class="dmbtn" id="dmBtn">🔍 看 DM</button>':'')+'</div>'+(th?'<div class="thumbs" id="thumbs">'+th+'</div>':'')+'<div class="pad" id="dash"></div></div>';
+    (th?'<button class="dmbtn" id="dmBtn">🔍 看 DM</button>':'')+'</div>'+(th||favHtml(g)?'<div class="throw">'+(th?'<div class="thumbs" id="thumbs">'+th+'</div>':'')+favHtml(g)+'</div>':'')+'<div class="pad" id="dash"></div></div>';
   if(g.mode!=='link') h+='<div class="card k-'+k+'" id="cartCard"></div>';
   h+='<div class="card k-'+k+' pad people" id="peopleCard"></div>';
   $('detail').innerHTML=h;
   drawDash(); if(g.mode!=='link') drawCart(); drawPeople();
   if(th){$('dmBtn').onclick=function(){openDM(g,0)};$('thumbs').onclick=function(e){var im=e.target.closest('img');if(im)openDM(g,+im.dataset.i)}}
+  if($('favBox'))$('favBox').onclick=openFav;
 }
+function favHtml(g){
+  var f=g.fav;if(!f)return '';
+  if(!f.top.length)return g.kind==='bento'?'<div class="fav new"><img src="img/joy_head.png" alt=""><div><b>新店開張！</b><span>還沒有人點過，當第一個開箱的人吧</span></div></div>':'';
+  var t=f.top,ord=t.length>=3?[1,0,2]:t.length===2?[1,0]:[0];
+  return '<div class="fav" id="favBox" role="button"><div class="t"><span>🏆 大家最愛</span><span>看全部 ›</span></div><div class="pod">'+
+    ord.map(function(i){return '<div class="pd g'+(i+1)+'"><div class="nm">'+esc(t[i].item)+'</div><div class="bl">'+(i+1)+'<small>'+t[i].qty+' 份</small></div></div>'}).join('')+'</div></div>';
+}
+// ---------- 大家最愛／我上次吃什麼 ----------
+function openHS(h){$('hs').innerHTML=h;$('hs').classList.add('open');$('hsBg').classList.add('open');document.body.style.overflow='hidden'}
+document.getElementById('hsBg').onclick=function(){closeHS()};
+function closeHS(){$('hs').classList.remove('open');$('hsBg').classList.remove('open');document.body.style.overflow=''}
+function addToCart(list){var g=G();if(!g||g.state!=='open'){toast('現在不能點餐喔',1);return false}
+  cart=cart.filter(function(c){return c.item&&c.item.trim()});
+  list.forEach(function(x){cart.push({item:x.item,qty:x.qty||1,price:x.price?String(x.price):'',sugar:x.sugar||'',ice:x.ice||'',note:x.note||''})});
+  if(!cart.length)cart=[blank()];drawCart();return true}
+function openFav(){var g=G();if(!g||!g.fav||!g.fav.top.length)return;var t=g.fav.top,mx=t[0].qty||1,cols=['#E0A10E','#9AA5B1','#C98A54','#C9B89E','#C9B89E'];
+  openHS('<div class="hh"><img src="img/tom_head.png" alt=""><div><b>'+esc(g.title)+'・大家最愛</b><span>以前開過 '+g.fav.times+' 次團的統計</span></div></div>'+
+    t.map(function(r,i){return '<div class="rk"><span class="n" style="background:'+cols[i]+'">'+(i+1)+'</span><div class="x"><b>'+esc(r.item)+'</b><span>'+(r.price?money(r.price)+'・':'')+r.qty+' 份・'+r.people+' 位同事點過</span><div class="bar"><i style="width:'+Math.round(r.qty/mx*100)+'%"></i></div></div>'+(g.state==='open'?'<button class="addb" data-a="'+i+'">＋加入</button>':'')+'</div>'}).join('')+
+    '<div class="hint">第一次點不知道吃什麼？跟著大家點準沒錯 👍'+(g.state==='open'?'<br>價格以今天的 DM 為準，加入後可以修改':'')+'</div><button class="ghost" style="width:100%" id="hsX">收起來</button>');
+  $('hsX').onclick=closeHS;$('hs').onclick=function(e){var b=e.target.closest('[data-a]');if(!b)return;var r=t[+b.dataset.a];if(addToCart([{item:r.item,price:r.price}])){toast('已加入「'+r.item+'」');b.textContent='✓ 已加入';b.disabled=true}}}
+function curExt(){var e=$('ext')?$('ext').value.trim():'';return /^\d{2,6}$/.test(e)?e:(proxy?'':(me.ext||''))}
+function openLast(){var e=curExt();if(e)return showLast(e);
+  openHS('<div class="hh"><img src="img/joy_head.png" alt=""><div><b>你是哪個分機呀？</b><span>輸入一次，這支手機就會記住</span></div></div><input class="askin" id="askIn" inputmode="numeric" placeholder="輸入分機"><button class="again" id="askGo">🔍 查我的紀錄</button><div class="hint">分機只用來找你的點餐紀錄</div><button class="ghost" style="width:100%" id="hsX">先不用</button>');
+  $('hsX').onclick=closeHS;$('hs').onclick=null;setTimeout(function(){$('askIn').focus()},350);
+  $('askGo').onclick=function(){var v=$('askIn').value.trim();if(!/^\d{2,6}$/.test(v)){$('askIn').focus();return toast('請輸入分機號碼',1)}
+    if(!proxy){me.ext=v;saveMe();if($('ext'))$('ext').value=v;loadCoins()}else if($('ext')){$('ext').value=v;px.ext=v}showLast(v)}}
+function showLast(ext){var g=G();if(!g)return;$('hs').onclick=null;
+  openHS('<div class="hint" style="padding:30px 0"><span class="spin"></span> TOM 正在翻紀錄…</div>');
+  LunchAPI.call('history',{groupId:g.id,ext:ext}).then(function(r){
+    if(!r.visits.length){openHS('<div class="hh"><img src="img/joy_head.png" alt=""><div><b>你還沒在'+esc(g.title)+'點過</b><span>分機 '+esc(ext)+(r.shopTimes?'・這是你第一次吃這家':'・這是新店喔')+'</span></div></div><div class="visit" style="text-align:center">'+(g.fav&&g.fav.top.length?'看看大家最愛什麼，跟著點準沒錯！':'今天點完，下次就看得到「我上次吃什麼」了！')+'</div>'+(g.fav&&g.fav.top.length?'<button class="again" id="toFav">🏆 看大家最愛</button>':'')+'<button class="ghost" style="width:100%;margin-top:6px" id="hsX">收起來</button>');
+      $('hsX').onclick=closeHS;if($('toFav'))$('toFav').onclick=openFav;return}
+    var op=g.state==='open';
+    openHS('<div class="hh"><img src="img/tom_head.png" alt=""><div><b>分機 '+esc(ext)+' 在'+esc(g.title)+'吃過</b><span>共 '+r.count+' 次'+(r.best?'・最常點：'+esc(r.best):'')+'</span></div></div>'+
+      r.visits.map(function(v,i){return '<div class="visit"><div class="d"><span>📅 '+v.date.slice(5).replace('-','/')+'（'+'日一二三四五六'.charAt(new Date(v.date+'T00:00:00').getDay())+'）</span><span>'+money(v.total)+'</span></div>'+
+        v.items.map(function(x){return '<div class="l"><span>'+esc(x.item)+' × '+x.qty+(x.sugar||x.ice?' <small>'+esc([x.sugar,x.ice].filter(Boolean).join(' '))+'</small>':'')+'</span><span>'+money(x.price*x.qty)+'</span></div>'+(x.note?'<div class="d">備註：'+esc(x.note)+'</div>':'')}).join('')+
+        (op?'<button class="again" data-v="'+i+'">🔁 再點一次</button>':'')+'</div>'}).join('')+
+      (op?'<div class="hint">價格以今天的 DM 為準，加入後還可以修改</div>':'')+'<button class="ghost" style="width:100%" id="hsX">收起來</button>');
+    $('hsX').onclick=closeHS;$('hs').onclick=function(e){var b=e.target.closest('[data-v]');if(!b)return;if(addToCart(r.visits[+b.dataset.v].items)){closeHS();toast('已放進點餐籃，確認後送出就好');setTimeout(function(){$('cartCard').scrollIntoView({behavior:'smooth',block:'start'})},300)}}
+  }).catch(function(e){closeHS();toast(/history|未知|不支援|Unknown/i.test(e.message)?'這個功能還在更新中，稍後再試':e.message,1)})}
 function drawDash(){
   var g=G(); if(!g) return; var k=g.kind,m=MAS[k],box=$('dash'),h='';
   if(g.state==='upcoming'){
@@ -425,7 +498,7 @@ function drawCart(){
       (k==='drink'?'<div class="cr3"><select data-f="sugar">'+SUGAR.map(function(s){return '<option value="'+s+'"'+(c.sugar===s?' selected':'')+'>'+(s||'甜度')+'</option>'}).join('')+'</select><select data-f="ice">'+ICE.map(function(s){return '<option value="'+s+'"'+(c.ice===s?' selected':'')+'>'+(s||'冰塊')+'</option>'}).join('')+'</select></div>':'')+'</div>';
   }).join('');
   var q=QUICK[k].length?'<div class="quick"><span class="l">常加點：</span>'+QUICK[k].map(function(x){return '<span class="chip" data-add="'+x[0]+'">＋'+x[0]+'</span>'}).join('')+'</div>':'';
-  box.innerHTML='<div class="pad"><div class="sec-t">'+(editMode?'✏️ 修改我的點餐':'🧺 我要點餐')+'</div>'+
+  box.innerHTML='<div class="pad"><div class="sec-t">'+(editMode?'✏️ 修改我的點餐':'🧺 我要點餐<button class="lastbtn" id="lastBtn">🕘 我上次吃什麼</button>')+'</div>'+
     (editMode?'':'<label class="proxy'+(proxy?' on':'')+'"><input type="checkbox" id="proxyCb"'+(proxy?' checked':'')+'> 👥 幫同事代點（用同事的分機，錢由同事付）</label>')+
     '<div class="grid2" style="margin-bottom:12px"><div><label>'+(proxy?'同事的分機 *':'分機 *')+'</label><input id="ext" inputmode="numeric" placeholder="'+(proxy?'同事的分機':'例如 226')+'" value="'+esc(proxy?px.ext:(me.ext||''))+'"'+(editMode?' readonly':'')+'></div><div><label>'+(proxy?'同事的稱呼':'稱呼（選填）')+'</label><input id="nm" placeholder="'+(proxy?'例如 Daniel':'例如 Ann')+'" value="'+esc(proxy?px.name:(me.name||''))+'"></div></div>'+
     '<div id="rows">'+rows+'</div><button class="addrow" id="addRow">＋ 再加一樣</button>'+q+
@@ -442,6 +515,7 @@ function drawCart(){
   $('addRow').onclick=function(){cart.push(blank());drawCart();var rs=document.querySelectorAll('.cartrow');rs[rs.length-1].querySelector('input').focus()};
   box.querySelectorAll('[data-add]').forEach(function(c){c.onclick=function(){var last=cart[cart.length-1];if(last.item)cart.push(blank());cart[cart.length-1].item=c.dataset.add;drawCart();var rs=document.querySelectorAll('.cartrow');rs[rs.length-1].querySelector('[data-f=price]').focus()}});
   $('send').onclick=submit;
+  if($('lastBtn'))$('lastBtn').onclick=openLast;
   if($('cancelEdit')) $('cancelEdit').onclick=function(){editMode=false;cart=[blank()];drawCart()};
 }
 function calc(){var t=0,n=0;cart.forEach(function(c){if(c.item){n++;t+=c.qty*(parseInt(c.price)||0)}});
@@ -595,7 +669,7 @@ function loadCoins(checkGain,open){
     if(open)openCS();
   }).catch(function(){drawBar()});
 }
-function coinPop(n,up,msg){var d=document.createElement('div');d.className='cpop';d.innerHTML='<img src="img/coin-64.png" alt=""><b>+'+n+' 熊幣！</b><span>'+(up?'升級了！你現在是 '+LVN[CM.level]+' 🎉':(msg||'謝謝你一起湊低消'))+'</span>';document.body.appendChild(d);setTimeout(function(){d.remove()},2500);if(up)burst(document.body)}
+function coinPop(n,up,msg){var d=document.createElement('div');d.className='cpop'+(up?' up':'');if(up)d.style.animationDuration='3.4s';d.innerHTML=(up?'<img class="lvup" src="img/levelup.png" alt="LEVEL UP!">':'')+'<img src="img/coin-64.png" alt=""><b>+'+n+' 熊幣！</b><span>'+(up?'升級了！你現在是 '+LVN[CM.level]+' 🎉':(msg||'謝謝你一起湊低消'))+'</span>';document.body.appendChild(d);setTimeout(function(){d.remove()},up?3400:2500);if(up)burst(document.body)}
 function openCS(){if(!CM)return;drawCS();$('cs').classList.add('open');$('csBg').classList.add('open');document.body.style.overflow='hidden'}
 function closeCS(){$('cs').classList.remove('open');$('csBg').classList.remove('open');document.body.style.overflow='';if(wTimer){clearInterval(wTimer);clearInterval(wPop);wTimer=null}}
 $('csBg').onclick=closeCS;

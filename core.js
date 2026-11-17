@@ -92,7 +92,41 @@ var LunchCore = (function () {
       r.state = stateOf(g, t); r.total = totals(rows); r.people = peopleOf(rows); r.marks = D.marks[g.id] || [];
       r.success = g.mode === 'link' ? null : (r.total.amount > 0 && r.total.amount >= g.min);
       if (withRows) r.rows = rows;
+      if (g.mode !== 'link' && g.kind !== 'other') r.fav = favOf(g, D, t);
       return r;
+    }
+    // ---------- 同一家店的歷史 ----------
+    function normT(s) { return str(s).replace(/\s+/g, '').toLowerCase(); }
+    function sameShop(a, b) { return a.kind === b.kind && ((a.shopId && a.shopId === b.shopId) || normT(a.title) === normT(b.title)); }
+    function pastOf(g, D, t) {
+      return D.groups.filter(function (x) { return x.id !== g.id && !x.cancelled && x.endAt <= t.dt && sameShop(x, g) && (D.byG[x.id] || []).length; })
+        .sort(function (a, b) { return a.endAt < b.endAt ? 1 : -1; });
+    }
+    function favOf(g, D, t) {
+      var past = pastOf(g, D, t), m = {}, list = [];
+      if (!past.length) return { times: 0, top: [] };
+      past.slice().reverse().forEach(function (x) {
+        (D.byG[x.id] || []).forEach(function (o) {
+          var k = normT(o.item); if (!k) return;
+          var a = m[k]; if (!a) { a = m[k] = { item: o.item, qty: 0, ppl: {}, price: 0 }; list.push(a); }
+          a.item = o.item; a.qty += o.qty; a.ppl[o.ext] = 1; if (o.price) a.price = o.price;
+        });
+      });
+      list.forEach(function (a) { a.people = Object.keys(a.ppl).length; delete a.ppl; });
+      list.sort(function (a, b) { return (b.qty - a.qty) || (b.people - a.people); });
+      return { times: past.length, top: list.slice(0, 5) };
+    }
+    function history(p) {
+      var ext = str(p.ext); if (!/^\d{2,6}$/.test(ext)) err('請輸入分機號碼');
+      var x = getGroup(str(p.groupId)), t = tp(now()), cnt = {}, best = '', bn = 0;
+      var visits = pastOf(x.g, x.D, t).map(function (g) {
+        var mine = (x.D.byG[g.id] || []).filter(function (o) { return o.ext === ext; });
+        if (!mine.length) return null;
+        mine.forEach(function (o) { var k = normT(o.item); cnt[k] = (cnt[k] || 0) + o.qty; if (cnt[k] > bn) { bn = cnt[k]; best = o.item; } });
+        return { date: g.endAt.slice(0, 10), title: g.title, total: mine.reduce(function (a, o) { return a + o.amount; }, 0),
+          items: mine.map(function (o) { return { item: o.item, qty: o.qty, price: o.price, note: o.note, sugar: o.sugar, ice: o.ice }; }) };
+      }).filter(Boolean);
+      return { ext: ext, title: x.g.title, shopTimes: pastOf(x.g, x.D, t).length, visits: visits.slice(0, 8), count: visits.length, best: best };
     }
     function getGroup(id) { var D = loadAll(); var g = D.groups.filter(function (x) { return x.id === id; })[0]; if (!g) err('找不到這個揪團'); return { g: g, D: D }; }
     function voteTarget(t, D) {
@@ -367,7 +401,7 @@ var LunchCore = (function () {
       home: home,
       group: function (p) { return groupDetail(str(p.id)); },
       saveCart: saveCart, deleteMine: deleteMine, mark: mark, vote: vote,
-      points: function (p) { return pointsOf(p.ext); }, play: play, saveRec: saveRec,
+      points: function (p) { return pointsOf(p.ext); }, play: play, saveRec: saveRec, history: history,
       shopsPublic: function () { return shops().filter(function (s) { return s.active; }); }
     };
     var adminApi = {
