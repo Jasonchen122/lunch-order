@@ -255,7 +255,7 @@ function init(){
   var t=T();$('fDate').value=t.date;$('stTo').value=t.date;$('stFrom').value=LunchCore.addDays(t.date,-30);
   $('fStart').value=t.dt;$('fEnd').value=LunchCore.addDays(t.date,2)+'T12:00';
   $('emo').innerHTML=EMOS.map(function(x){return '<span data-e="'+x+'"'+(x===F.emoji?' class="on"':'')+'>'+x+'</span>'}).join('');
-  loadShops().then(loadGroups);setForm();
+  api('recs').then(function(r){RECS=r}).catch(function(){});loadShops().then(loadGroups);setForm();
 }
 function loadShops(){return api('shops').then(function(r){SHOPS=r;drawPicker();drawShopList()})}
 function loadGroups(){return api('adminGroups').then(function(r){GL=r;drawGL();drawVote();fillSel();recBadge(r.recNew||0)}).catch(function(e){toast(e.message,1)})}
@@ -299,11 +299,14 @@ function coinLine(){var d=T().date;
   if(d<COIN_INTRO_UNTIL)return '🪙 熊幣樂園開張囉！\n今天點便當 +1、點飲料 +1\n湊滿低消那一刻送出的人，再加 1 枚「成團功臣」\n熊幣可以玩午餐扭蛋、打 TOM，存越多等級越高，名字外框會變色喔！\n📸 在外面看到好吃的？按「推薦新菜單」拍下菜單，也能拿熊幣！';
   var n=0;for(var i=0;i<d.length;i++)n+=d.charCodeAt(i);return COIN_LINES[n%COIN_LINES.length]}
 function lineText(list){
-  var t=T(),bd=list.filter(function(g){return g.kind!=='other'}).sort(function(x,y){return (x.kind==='bento'?0:1)-(y.kind==='bento'?0:1)}),ot=list.filter(function(g){return g.kind==='other'}),out=[];
+  var thanks=[],t=T(),bd=list.filter(function(g){return g.kind!=='other'}).sort(function(x,y){return (x.kind==='bento'?0:1)-(y.kind==='bento'?0:1)}),ot=list.filter(function(g){return g.kind==='other'}),out=[];
   if(bd.length){out.push('🍱 今日午餐開團囉！'+md(t.date));bd.forEach(function(g){out.push('');out.push('【'+(g.kind==='bento'?'便當':'飲料')+'】'+g.title+(g.mode==='link'?'（線上點餐）':''));
     out.push('⏰ '+g.endAt.slice(11,16)+(g.mode==='link'?' 截止':' 結單｜低消 '+(g.min?money(g.min):'無')));if(g.message)out.push(g.message)})}
+  bd.concat(ot).forEach(function(g){var r=g.shopId&&RECS.filter(function(x){return x.status==='adopted'&&x.shopId===g.shopId})[0];
+    if(r){thanks.push('🌟 今天的「'+g.title+'」是分機 '+r.ext+(r.name?' '+r.name:'')+' 推薦的，謝謝美食探子！')}});
   ot.forEach(function(g){if(out.length)out.push('');out.push('✨ 揪團：'+(g.emoji?g.emoji+' ':'')+g.title);if(g.desc)out.push(g.desc);
     out.push('📅 '+fdt(g.startAt)+' ～ '+fdt(g.endAt));if(g.min)out.push('低消 '+money(g.min));if(g.message)out.push(g.message)});
+  if(thanks.length){out.push('');thanks.forEach(function(x){out.push(x)})}
   out.push('');out.push('👉 點這裡看菜單、點餐：');out.push(pageUrl());out.push('');out.push(coinLine());out.push('');out.push('TOM 等你一起來，湊滿低消大家才吃得到喔！');
   return out.join('\n');
 }
