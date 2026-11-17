@@ -17,7 +17,12 @@
 .nav button{white-space:nowrap;font-size:15px}
 .nav button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .f{margin-bottom:12px}
-.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+@media(min-width:760px){.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g3 .full2{grid-column:1/-1}}
+.g3>.f{min-width:0}
+input[type=date],input[type=time],input[type=datetime-local]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;width:100%;height:48px;text-align:left;line-height:1.2;background:#fff}
+input::-webkit-date-and-time-value{text-align:left}
+.g3 .wide{grid-column:1/-1}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .seg button{font-size:16px;padding:12px 6px}
 .seg button.on[data-k=bento]{background:var(--b2);border-color:var(--b2);color:#fff}
@@ -123,8 +128,8 @@ td.n,th.n{text-align:right}
           <div class="f dayf"><label>日期</label><input type="date" id="fDate"></div>
           <div class="f dayf"><label>結單時間</label><input type="time" id="fDl" value="09:40"></div>
           <div class="f dayf"><label>收攤時間</label><input type="time" id="fClose" value="14:00"></div>
-          <div class="f otherf hide"><label>開始</label><input type="datetime-local" id="fStart"></div>
-          <div class="f otherf hide"><label>結束（結單）</label><input type="datetime-local" id="fEnd"></div>
+          <div class="f otherf wide hide"><label>開始</label><input type="datetime-local" id="fStart"></div>
+          <div class="f otherf wide hide"><label>結束（結單）</label><input type="datetime-local" id="fEnd"></div>
         </div>
         <div id="imgBox" class="hide f"><label>照片或 DM（選填）</label><div class="imgs" id="gImgs"></div><input type="file" id="gFile" accept="image/*" multiple style="border-style:dashed"><div id="gUp" class="muted" style="margin-top:6px"></div></div>
         <div class="f"><label>發送文加一句話（選填）</label><input id="fMsg" placeholder="例如 今天下雨，叫外送最舒服"></div>
@@ -183,7 +188,7 @@ td.n,th.n{text-align:right}
     <section id="p_stats" class="hide">
       <div class="card pad"><div class="g3">
         <div class="f"><label>從</label><input type="date" id="stFrom"></div><div class="f"><label>到</label><input type="date" id="stTo"></div>
-        <div class="f" style="align-self:end"><button class="primary" id="stGo" style="width:100%">查詢</button></div></div>
+        <div class="f wide"><button class="primary" id="stGo" style="width:100%">查詢</button></div></div>
         <div class="muted" style="font-size:13px">流標＝結單時沒達到低消。平均金額越高，通常代表大家越愛這家。線上點餐的團只統計次數和點好人數。</div></div>
       <div id="stOut"></div>
     </section>
@@ -258,7 +263,7 @@ $('glist').onclick=function(e){var b=e.target.closest('[data-a]');if(!b)return;v
   if(b.dataset.a==='del'){ask('確定取消「'+g.title+'」？點餐頁會立刻看不到這一團，已點的紀錄會保留。','取消這團').then(function(ok){if(ok)api('cancelGroup',{id:g.id}).then(function(){toast('已取消');loadGroups()})})}};
 $('copyToday').onclick=function(){var t=T(),list=GL.groups.filter(function(g){return (g.state==='open'||g.state==='upcoming')&&(g.kind!=='other'||g.endAt.slice(0,10)>=t.date)});
   if(!list.length)return toast('目前沒有進行中的揪團',1);showLine(lineText(list))};
-function pageUrl(){return location.href.replace(/admin\.html.*$/,'').replace(/[?#].*$/,'')}
+function pageUrl(){return location.href.replace(/admin\.html.*$/,'').replace(/[?#].*$/,'')+'?d='+T().date.replace(/-/g,'')}
 function lineText(list){
   var t=T(),bd=list.filter(function(g){return g.kind!=='other'}),ot=list.filter(function(g){return g.kind==='other'}),out=[];
   if(bd.length){out.push('🍱 今日午餐開團囉！'+md(t.date));bd.forEach(function(g){out.push('');out.push('【'+(g.kind==='bento'?'便當':'飲料')+'】'+g.title+(g.mode==='link'?'（線上點餐）':''));
@@ -278,7 +283,7 @@ function setForm(){
   [].forEach.call($('modeSeg').children,function(b){b.classList.toggle('on',b.dataset.m===F.mode)});
   $('modeBox').classList.toggle('hide',k==='bento');$('shopBox').classList.toggle('hide',o);$('emoBox').classList.toggle('hide',!o);
   $('linkBox').classList.toggle('hide',!link);$('minBox').classList.toggle('hide',link);$('minOpt').classList.toggle('hide',!o);
-  $('descBox').classList.toggle('hide',!o);$('imgBox').classList.toggle('hide',!o);
+  $('descBox').classList.toggle('hide',!o);$('minBox').classList.toggle('wide',o||k==='drink'&&link);$('imgBox').classList.toggle('hide',!o);
   [].forEach.call(document.querySelectorAll('.dayf'),function(x){x.classList.toggle('hide',o)});
   [].forEach.call(document.querySelectorAll('.otherf'),function(x){x.classList.toggle('hide',!o)});
   $('titleLbl').textContent=o?'揪團名稱 *':(k==='drink'?'飲料店名 *':'今日店名 *（會顯示在點餐頁）');
