@@ -87,6 +87,7 @@
 .send{width:100%;font-size:19px;padding:15px;border:none;color:#fff;background:var(--c2)}
 .closednote{padding:20px 14px;text-align:center;font-weight:700;color:var(--sub)}
 .people .chip.me{border-color:var(--c2);background:var(--c1)}
+.people .chip.me.on{background:var(--ink);border-color:var(--ink);color:#fff}.people .chip.me.on small{color:#E8DCC8}
 .people .chip .pd{color:var(--ok2);font-weight:900}
 .pview{background:var(--bg);border-radius:14px;padding:12px 14px;margin-top:6px;animation:fadeup .25s both}
 .pview .ln{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
@@ -329,10 +330,11 @@ function drawPeople(){
       p.items.map(function(i){var ex=[i.sugar,i.ice,i.note].filter(Boolean).join('・');return '<div class="ln"><span>'+esc(i.item)+' × '+i.qty+(ex?' <small class="muted">'+esc(ex)+'</small>':'')+(i.paid?' <small style="color:var(--ok2)">✓</small>':'')+'</span><span>'+money(i.amount)+'</span></div>'}).join('')+
       '<div class="paybar '+(p.paid?'paid':'unpaid')+'"><span>'+(p.paid?'<span class="stamp">已付款</span>謝謝你！':'待付款・請交現金給管理員'+(p.total!==p.unpaid?'（已付 '+money(p.total-p.unpaid)+'）':''))+'</span><b>'+money(p.paid?p.total:p.unpaid)+'</b></div>'+
       (canEdit?'<div class="row" style="margin-top:10px"><button id="edMine" style="flex:1">✏️ 修改</button><button id="addMine" style="flex:1">＋ 再加一樣</button><button id="delMine" style="color:var(--no2)">刪除</button></div>':'')+
-      (mine||g.state!=='open'?'':'<div class="muted" style="font-size:12px;margin-top:6px">只有本人的分機可以修改</div>')+'</div>';
+      (mine||g.state!=='open'||!p.unpaid?'':'<button id="claim" style="width:100%;margin-top:10px">🙋 這是我的分機，我要修改</button>')+'</div>';
   }
   box.innerHTML=h;
   box.onclick=function(e){var c=e.target.closest('[data-x]');if(c){viewExt=viewExt===c.dataset.x?'':c.dataset.x;drawPeople()}};
+  if($('claim')) $('claim').onclick=function(){ask('你是分機 '+p.ext+(p.name?'（'+p.name+'）':'')+' 本人嗎？確認後這台裝置會記住你的分機。','是我').then(function(ok){if(!ok)return;me.ext=p.ext;if(p.name&&!me.name)me.name=p.name;saveMe();drawPeople();if($('cartCard')&&G().state==='open')drawCart();toast('好的，現在可以修改了')})};
   if($('edMine')){
     $('edMine').onclick=function(){editMode=true;cart=p.items.filter(function(i){return !i.paid}).map(function(i){return {item:i.item,qty:i.qty,price:String(i.price),sugar:i.sugar,ice:i.ice,note:i.note}});drawCart();$('cartCard').scrollIntoView({behavior:'smooth'})};
     $('addMine').onclick=function(){editMode=false;cart=[blank()];drawCart();$('cartCard').scrollIntoView({behavior:'smooth'});setTimeout(function(){var r=document.querySelector('.cartrow input');if(r)r.focus()},400)};
