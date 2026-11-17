@@ -126,7 +126,7 @@
   <div id="cards"><div class="loading"><img src="img/logo_frame.png" alt="">讀取中…</div></div>
   <div id="detail"></div>
   <div id="after"></div>
-  <div class="foot"><a href="admin.html">🔒 管理員後台</a><div id="ver"></div></div>
+  <div class="foot"><button class="refbtn" id="refBtn">↻ 重新整理（取得最新版）</button><br><a href="admin.html">🔒 管理員後台</a><div id="ver"></div></div>
 </div>
 <div class="viewer hide" id="viewer"><div class="vbar"><b id="vTitle"></b><button id="vZoom">🔍 放大</button><button class="close" id="vClose">縮小 ✕</button></div><div class="vbody" id="vBody"></div></div>
 <div class="toast" id="toast"></div>
@@ -407,6 +407,12 @@ function load(first){
   }).catch(function(e){$('cards').innerHTML='<div class="card pad" style="text-align:center"><img src="img/tom_head_gray.png" width="80" alt=""><p>'+esc(e.message)+'</p><button onclick="location.reload()">重新整理</button></div>'})
   .then(function(){busy=false});
 }
+// ---------- 重新整理與新版本提示 ----------
+function hasDraft(){return cart.some(function(c){return c.item&&c.item.trim()})}
+function doRefresh(){if(hasDraft()){ask('你還有沒送出的點餐，重新整理後要重填，確定嗎？','重新整理').then(function(ok){if(ok)hardReload()})}else hardReload()}
+$('refBtn').onclick=doRefresh;
+watchVersion(function(v){var d=document.createElement('div');d.className='newver';d.innerHTML='<img src="img/tom_head.png" alt="">有新版本 v'+esc(v)+'<b>點我更新</b>';d.onclick=doRefresh;document.body.appendChild(d)});
+
 // ---------- 體驗模式（只在試用版出現）----------
 if(LunchAPI.demo){
   var KEY='lunchDemoV2';

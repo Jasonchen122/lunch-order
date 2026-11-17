@@ -94,7 +94,7 @@ td.n,th.n{text-align:right}
   </div>
 
   <div id="app" class="hide">
-    <div class="head"><img src="img/tom_head.png" alt=""><h1>管理員後台 <span id="verTag" class="tag" style="background:#EFEDE6;color:var(--sub);vertical-align:middle"></span></h1><a href="index.html"><button>看點餐頁</button></a></div>
+    <div class="head"><img src="img/tom_head.png" alt=""><h1>管理員後台 <span id="verTag" class="tag" style="background:#EFEDE6;color:var(--sub);vertical-align:middle"></span></h1><button id="refBtn" title="重新整理">↻</button><a href="index.html"><button>看點餐頁</button></a></div>
     <div class="nav" id="nav">
       <button data-p="open" class="on">📣 開團</button>
       <button data-p="pay">💰 收款・明細</button>
@@ -432,6 +432,8 @@ function loadStats(){
   }).catch(function(e){toast(e.message,1)});
 }
 
+$('refBtn').onclick=function(){hardReload()};
+watchVersion(function(v){var x=document.createElement('div');x.className='newver';x.innerHTML='<img src="img/tom_head.png" alt="">有新版本 v'+esc(v)+'<b>點我更新</b>';x.onclick=function(){hardReload()};document.body.appendChild(x)});
 var vZ=false;function openViewer(t,imgs){$('vTitle').textContent=t;$('vBody').innerHTML=imgs.map(function(u){return '<img src="'+esc(u)+'">'}).join('');vZ=false;$('viewer').classList.remove('zoom');$('viewer').classList.remove('hide')}
 $('vZoom').onclick=function(){vZ=!vZ;$('viewer').classList.toggle('zoom',vZ);this.textContent=vZ?'↩ 原尺寸':'🔍 放大'};
 $('vClose').onclick=function(){$('viewer').classList.add('hide')};

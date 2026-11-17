@@ -98,5 +98,22 @@
       document.body.appendChild(d);
     });
   };
+  // 重新整理：先把網頁檔案重新抓一次，再重新載入，確保拿到最新版
+  var FILES = ['index.html', 'admin.html', 'common.css', 'core.js', 'api.js', 'version.js', 'seed.js', 'config.js'];
+  window.hardReload = function () {
+    var done = function () { location.reload(); };
+    try { Promise.all(FILES.map(function (f) { return fetch(f, { cache: 'reload' }).catch(function () {}); })).then(done, done); setTimeout(done, 4000); } catch (e) { done(); }
+  };
+  // 每 2 分鐘檢查有沒有新版本
+  window.watchVersion = function (onNew) {
+    var cur = (window.LUNCH_VERSIONS || [])[0], shown = false;
+    if (!cur) return;
+    setInterval(function () {
+      if (shown || document.hidden) return;
+      fetch('version.js?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+        var m = t.match(/v:\s*'([^']+)'/); if (m && m[1] !== cur.v) { shown = true; onNew(m[1]); }
+      }).catch(function () {});
+    }, 120000);
+  };
   window.LunchAPI = { demo: demo, call: call, resetDemo: function () { if (store) store.reset(); } };
 })();

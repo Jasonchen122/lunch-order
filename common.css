@@ -60,4 +60,7 @@ label{display:block;font-size:14px;font-weight:700;color:var(--sub);margin:0 0 6
 .okbtn{background:var(--b2);border-color:var(--b2);color:#fff}
 .cf{position:absolute;width:9px;height:9px;border-radius:2px;pointer-events:none;z-index:5;animation:fly 1.7s ease-out forwards}
 @keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(720deg)}}
+.newver{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:70;background:var(--ink);color:#fff;border-radius:999px;padding:10px 16px;font-weight:800;font-size:14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.2);animation:fadeup .4s both;cursor:pointer;white-space:nowrap}
+.newver img{width:26px}.newver b{background:var(--b2);border-radius:999px;padding:3px 10px}
+.refbtn{font-size:14px;padding:8px 16px;margin-bottom:8px}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
