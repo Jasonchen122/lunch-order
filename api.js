@@ -9,6 +9,7 @@
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     var t = LunchCore.tp(), today = t.date;
     if (!db || db.seedDay !== today) db = seed(t);
+    if (!db.coins) db.coins = [];
     function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
     save();
     function S(o) { var c = {}; for (var k in o) c[k] = o[k] === undefined || o[k] === null ? '' : String(o[k]); return c; }
@@ -22,7 +23,7 @@
     };
   }
   function seed(t) {
-    var A = LunchCore.addDays, db = { seedDay: t.date, shops: [], groups: [], orders: [], marks: [], votes: [] }, n = 0;
+    var A = LunchCore.addDays, db = { seedDay: t.date, shops: [], groups: [], orders: [], marks: [], votes: [], coins: [] }, n = 0;
     (window.LUNCH_SEED_SHOPS || []).forEach(function (s) {
       db.shops.push({ id: s.id, name: s.name, type: s.type, category: s.category, phone: s.phone, minOrder: s.minOrder, note: s.note, images: JSON.stringify(s.images), active: '1', createdAt: '' });
     });
@@ -69,7 +70,7 @@
     if (h0.ok) store.all('votes').forEach(function (v) { if (!v.target) store.update('votes', 'ext', v.ext, { target: h0.data.vote.target }); });
   }
 
-  var GET_ACTIONS = { home: 1, group: 1, shopsPublic: 1 };
+  var GET_ACTIONS = { home: 1, group: 1, shopsPublic: 1, points: 1 };
   function call(action, params) {
     params = params || {}; params.action = action;
     if (demo) {
