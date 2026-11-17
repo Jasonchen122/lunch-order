@@ -14,7 +14,7 @@
 .head img{width:48px}
 .head h1{font-size:21px;margin:0;flex:1;line-height:1.2}
 .nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}
-.nav button{white-space:nowrap;font-size:15px}
+.nav button{white-space:nowrap;font-size:15px;flex:none}
 .nav button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .f{margin-bottom:12px}
 .g3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
@@ -82,6 +82,17 @@ td.n,th.n{text-align:right}
 .slist .s{display:flex;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
 .slist .s img,.slist .s .ph{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px}
 .slist .s .t{flex:1}
+.nbadge{display:inline-block;background:var(--no2);color:#fff;font-size:11px;font-weight:900;border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.seg2{display:flex;gap:6px;flex-wrap:wrap}.seg2 button{font-size:14px;padding:7px 12px}.seg2 button.on{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.rc{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.rc.new{border-color:#1D9E75;box-shadow:0 0 0 3px #E1F5EE}
+.rc .who{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--sub);flex-wrap:wrap}
+.rc h3{margin:6px 0 2px;font-size:19px}.rc .ph{font-size:14px;color:var(--sub)}
+.rc .imgs{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}.rc .imgs img{width:96px;height:96px;object-fit:cover;border-radius:12px;cursor:zoom-in;border:1px solid var(--line)}
+.rc .bt{display:flex;gap:8px;flex-wrap:wrap}.rc .bt button{flex:1;min-width:130px}
+.adopt{background:#1D9E75!important;border-color:#1D9E75!important;color:#fff!important}
+.rst{font-size:12px;font-weight:900;border-radius:999px;padding:2px 9px}.rst.new{background:#E1F5EE;color:#085041}.rst.adopted{background:var(--ok1);color:var(--ok4)}.rst.kept{background:#EFEDE6;color:var(--sub)}
+.afm{background:#F3FBF7;border:1.5px solid #9FE1CB;border-radius:14px;padding:12px;margin-top:10px}
 .login{max-width:380px;margin:10vh auto;text-align:center}
 .login img{width:110px;animation:pulse 2.4s ease-in-out infinite}
 .sec-t{font-size:18px;font-weight:800;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -103,12 +114,14 @@ td.n,th.n{text-align:right}
     <div class="nav" id="nav">
       <button data-p="open" class="on">📣 開團</button>
       <button data-p="pay">💰 收款・明細</button>
+      <button data-p="recs">📸 推薦<span class="nbadge hide" id="recBadge"></span></button>
       <button data-p="shops">🏪 店家 DM</button>
       <button data-p="stats">📊 統計</button>
     </div>
 
     <!-- 開團 -->
     <section id="p_open">
+      <div class="card pad hide" id="recNote" style="background:#EAFBF4;border-color:#9FE1CB;cursor:pointer"></div>
       <div class="card pad" id="voteBox"></div>
       <div class="card">
         <div class="pad" style="padding-bottom:0"><div class="sec-t">進行中・即將開始 <button id="copyToday" style="margin-left:auto;font-size:13px;padding:6px 10px">📋 複製今天全部發送文</button></div></div>
@@ -160,6 +173,12 @@ td.n,th.n{text-align:right}
         </div>
         <div class="row"><button class="primary" id="aoSave">儲存</button><button id="aoCancel">取消</button></div>
       </div>
+    </section>
+
+    <!-- 推薦 -->
+    <section id="p_recs" class="hide">
+      <div class="row" style="margin-bottom:12px;flex-wrap:wrap"><div class="seg2" id="recFilter"><button data-f="new" class="on">新推薦</button><button data-f="kept">先收著</button><button data-f="adopted">已加入 DM</button><button data-f="all">全部</button></div></div>
+      <div id="recList"></div>
     </section>
 
     <!-- 店家 -->
@@ -229,7 +248,8 @@ $('loginBtn').onclick=function(){PW=$('pw').value;enter()};$('pw').onkeydown=fun
 if(PW) enter();
 $('nav').onclick=function(e){var b=e.target.closest('button');if(!b)return;
   [].forEach.call($('nav').children,function(x){x.classList.toggle('on',x===b)});
-  ['open','pay','shops','stats'].forEach(function(p){$('p_'+p).classList.toggle('hide',p!==b.dataset.p)});
+  ['open','pay','recs','shops','stats'].forEach(function(p){$('p_'+p).classList.toggle('hide',p!==b.dataset.p)});
+  if(b.dataset.p==='recs')loadRecs();
   if(b.dataset.p==='pay')loadGroups().then(function(){loadPay()});if(b.dataset.p==='shops')drawShopList();if(b.dataset.p==='stats')loadStats();};
 function init(){
   var t=T();$('fDate').value=t.date;$('stTo').value=t.date;$('stFrom').value=LunchCore.addDays(t.date,-30);
@@ -238,7 +258,7 @@ function init(){
   loadShops().then(loadGroups);setForm();
 }
 function loadShops(){return api('shops').then(function(r){SHOPS=r;drawPicker();drawShopList()})}
-function loadGroups(){return api('adminGroups').then(function(r){GL=r;drawGL();drawVote();fillSel()}).catch(function(e){toast(e.message,1)})}
+function loadGroups(){return api('adminGroups').then(function(r){GL=r;drawGL();drawVote();fillSel();recBadge(r.recNew||0)}).catch(function(e){toast(e.message,1)})}
 
 // ---------- 開團：清單 ----------
 function drawVote(){
@@ -451,6 +471,39 @@ function loadStats(){
   }).catch(function(e){toast(e.message,1)});
 }
 
+// ---------- 推薦 ----------
+var RECS=[],recF='new';
+function recBadge(n){var b=$('recBadge');b.textContent=n;b.classList.toggle('hide',!n);var r=$('recNote');r.classList.toggle('hide',!n);
+  if(n){r.innerHTML='<b style="color:#085041">📸 有 '+n+' 則新的菜單推薦等你看 ›</b>';r.onclick=function(){document.querySelector('[data-p=recs]').click()}}}
+function loadRecs(){$('recList').innerHTML='<div class="loading"><img src="img/logo_frame.png" alt="">讀取中…</div>';
+  return api('recs').then(function(r){RECS=r;recBadge(r.filter(function(x){return x.status==='new'}).length);drawRecs()}).catch(function(e){toast(e.message,1)})}
+$('recFilter').onclick=function(e){var b=e.target.closest('[data-f]');if(!b)return;recF=b.dataset.f;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b)});drawRecs()};
+var RST={new:'新推薦',kept:'先收著',adopted:'已加入 DM'};
+function drawRecs(){
+  var list=RECS.filter(function(r){return recF==='all'||r.status===recF});
+  $('recList').innerHTML=list.length?list.map(function(r){
+    var t=r.createdAt.replace('T',' ').slice(5,16).replace('-','/');
+    return '<div class="rc'+(r.status==='new'?' new':'')+'"><div class="who"><span>🙋 分機 <b style="color:var(--ink);font-size:15px">'+esc(r.ext)+'</b> '+esc(r.name)+'・'+t+'</span><span class="rst '+r.status+'">'+RST[r.status]+'</span></div>'+
+      '<h3>'+(esc(r.shop)||'<span class="muted">（沒有寫店名）</span>')+'</h3><div class="ph">'+(r.phone?'📞 '+esc(r.phone):'沒有電話')+(r.note?'・「'+esc(r.note)+'」':'')+'</div>'+
+      '<div class="imgs">'+r.images.map(function(u,i){return '<img src="'+esc(u)+'" data-rv="'+r.id+'" data-i="'+i+'" alt="菜單">'}).join('')+'</div>'+
+      (r.status!=='adopted'?'<div class="bt"><button class="adopt" data-ad="'+r.id+'">✅ 加入店家 DM</button>'+(r.status==='new'?'<button data-kp="'+r.id+'">🙏 先收著</button>':'<button data-nw="'+r.id+'">↩ 標回新推薦</button>')+'</div><div id="af_'+r.id+'"></div>':'')+'</div>';
+  }).join(''):'<div class="card pad muted">'+(recF==='new'?'目前沒有新的推薦，鼓勵同事在外面看到好吃的就拍下來吧！':'沒有資料')+'</div>';
+}
+$('recList').onclick=function(e){
+  var v=e.target.closest('[data-rv]');if(v){var r=RECS.filter(function(x){return x.id===v.dataset.rv})[0];openViewer((r.shop||'推薦菜單')+'（分機 '+r.ext+'）',r.images);return}
+  var kp=e.target.closest('[data-kp]'),nw=e.target.closest('[data-nw]');
+  if(kp||nw){api('setRec',{id:(kp||nw).dataset[kp?'kp':'nw'],status:kp?'kept':'new'}).then(function(r){RECS=r;recBadge(r.filter(function(x){return x.status==='new'}).length);drawRecs();toast(kp?'先收著了':'已標回新推薦')});return}
+  var ad=e.target.closest('[data-ad]');if(ad){var id=ad.dataset.ad,box=$('af_'+id);if(box.innerHTML){box.innerHTML='';return}
+    var r=RECS.filter(function(x){return x.id===id})[0],cats=BCATS.concat(DCATS.filter(function(c){return c!=='其他'}));
+    box.innerHTML='<div class="afm"><div class="g3"><div class="f"><label>店名 *</label><input id="an_'+id+'" value="'+esc(r.shop)+'" placeholder="請填店名"></div><div class="f"><label>電話</label><input id="ap_'+id+'" value="'+esc(r.phone)+'"></div>'+
+      '<div class="f"><label>類型</label><select id="at_'+id+'"><option value="bento">🍱 便當／餐點</option><option value="drink">🧋 飲料</option></select></div><div class="f"><label>分類</label><select id="ac_'+id+'">'+cats.map(function(c){return '<option>'+c+'</option>'}).join('')+'</select></div>'+
+      '<div class="f"><label>預設低消</label><input id="am_'+id+'" inputmode="numeric" placeholder="選填"></div><div class="f"><label>備註</label><input id="ao_'+id+'" value="'+esc(r.note)+'"></div></div>'+
+      '<div class="muted" style="font-size:13px;margin-bottom:8px">菜單照片會直接當成這家店的 DM</div><button class="adopt" style="width:100%;font-size:16px" data-ok="'+id+'">儲存成店家，分機 '+esc(r.ext)+' +1 熊幣</button></div>';
+    setTimeout(function(){$('an_'+id).focus()},50);return}
+  var ok=e.target.closest('[data-ok]');if(ok){var i2=ok.dataset.ok,nm=$('an_'+i2).value.trim();if(!nm){$('an_'+i2).focus();return toast('請先填店名',1)}ok.disabled=true;
+    api('adoptRec',{id:i2,shop:{name:nm,phone:$('ap_'+i2).value.trim(),type:$('at_'+i2).value,category:$('ac_'+i2).value,minOrder:$('am_'+i2).value.trim(),note:$('ao_'+i2).value.trim()}})
+    .then(function(r){RECS=r.recs;recBadge(r.recs.filter(function(x){return x.status==='new'}).length);drawRecs();toast('「'+r.shop.name+'」已加入店家 DM 🎉');loadShops()}).catch(function(err){ok.disabled=false;toast(err.message,1)})}
+};
 $('refBtn').onclick=function(){hardReload()};
 watchVersion(function(v){var x=document.createElement('div');x.className='newver';x.innerHTML='<img src="img/tom_head.png" alt="">有新版本 v'+esc(v)+'<b>點我更新</b>';x.onclick=function(){hardReload()};document.body.appendChild(x)});
 var vZ=false;function openViewer(t,imgs){$('vTitle').textContent=t;$('vBody').innerHTML=imgs.map(function(u){return '<img src="'+esc(u)+'">'}).join('');vZ=false;$('viewer').classList.remove('zoom');$('viewer').classList.remove('hide')}

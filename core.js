@@ -6,7 +6,8 @@ var LunchCore = (function () {
     orders: ['id', 'groupId', 'ext', 'name', 'item', 'qty', 'price', 'amount', 'sugar', 'ice', 'note', 'paid', 'picked', 'createdAt', 'updatedAt'],
     marks: ['groupId', 'ext', 'name', 'createdAt'],
     votes: ['target', 'ext', 'choice', 'createdAt'],
-    coins: ['ext', 'game', 'cost', 'note', 'createdAt']
+    coins: ['ext', 'game', 'cost', 'note', 'createdAt'],
+    recs: ['id', 'ext', 'name', 'shop', 'phone', 'note', 'images', 'status', 'shopId', 'createdAt', 'updatedAt']
   };
   var LEVELS = [[0, 'Lv1 新手熊'], [1, 'Lv2 便當見習熊'], [15, 'Lv3 午餐達人熊'], [30, 'Lv4 揪團高手熊'], [60, 'Lv5 湯姆熊傳說']];
   var GAMES = { gacha: '午餐扭蛋', whack: '打 TOM' };
@@ -162,24 +163,32 @@ var LunchCore = (function () {
           if (hero) rec(hero).hero++;
         }
       });
+      store.all('recs').forEach(function (x) {
+        var e = str(x.ext); if (!e) return; var r = rec(e);
+        r.recDays = r.recDays || {}; r.recDays[str(x.createdAt).slice(0, 10)] = 1;
+        if (str(x.status) === 'adopted') { r.adopted = (r.adopted || 0) + 1; (r.adoptedList = r.adoptedList || []).push({ id: str(x.id), shop: str(x.shop), at: str(x.updatedAt) }); }
+        if (x.name && !names[e]) names[e] = str(x.name);
+      });
       var out = {};
       Object.keys(P).forEach(function (e) {
         var r = P[e], bd = Object.keys(r.bento).sort(), streak = 0, run = 0, prev = '';
         bd.forEach(function (d) { run = (prev && nextWorkday(prev) === d) ? run + 1 : 1; if (run % 5 === 0) streak += 2; prev = d; });
-        var b = { bento: bd.length, drink: Object.keys(r.drink).length, other: Object.keys(r.other).length, hero: r.hero, streak: streak };
-        out[e] = { earned: b.bento + b.drink + b.other + b.hero + b.streak, breakdown: b, days: r, name: names[e] || '' };
+        var b = { bento: bd.length, drink: Object.keys(r.drink).length, other: Object.keys(r.other).length, hero: r.hero, streak: streak,
+          recSent: Object.keys(r.recDays || {}).length, recAdopted: r.adopted || 0 };
+        out[e] = { earned: b.bento + b.drink + b.other + b.hero + b.streak + b.recSent + b.recAdopted, breakdown: b, days: r, name: names[e] || '', adoptedList: r.adoptedList || [] };
       });
       return out;
     }
     function spentAll() { var s = {}; store.all('coins').forEach(function (c) { var e = str(c.ext); s[e] = (s[e] || 0) + num(c.cost); }); return s; }
     function pointsOf(ext, D, P, S) {
       ext = str(ext); D = D || loadAll(); P = P || pointsAll(D); S = S || spentAll();
-      var p = P[ext] || { earned: 0, breakdown: { bento: 0, drink: 0, other: 0, hero: 0, streak: 0 }, days: { bento: {}, drink: {} }, name: '' };
+      var p = P[ext] || { earned: 0, breakdown: { bento: 0, drink: 0, other: 0, hero: 0, streak: 0, recSent: 0, recAdopted: 0 }, days: { bento: {}, drink: {} }, name: '', adoptedList: [] };
       var t = tp(now()), li = lvOf(p.earned), nx = LEVELS[li + 1], spent = S[ext] || 0;
       var mon = addDays(t.date, -((t.dow + 6) % 7)), week = [];
       for (var i = 0; i < 5; i++) { var d = addDays(mon, i); week.push(!!(p.days.bento && p.days.bento[d]) || !!(p.days.drink && p.days.drink[d])); }
       return { ext: ext, name: p.name, earned: p.earned, spent: spent, balance: Math.max(0, p.earned - spent), level: li, levelName: LEVELS[li][1],
-        levelAt: LEVELS[li][0], nextAt: nx ? nx[0] : null, nextName: nx ? nx[1] : '', breakdown: p.breakdown, week: week, today: t.date };
+        levelAt: LEVELS[li][0], nextAt: nx ? nx[0] : null, nextName: nx ? nx[1] : '', breakdown: p.breakdown, week: week, today: t.date,
+        adopted: p.adoptedList.filter(function (a) { return a.at >= addDays(t.date, -14); }), recToday: !!(p.days.recDays && p.days.recDays[t.date]) };
     }
     function play(p) {
       var ext = str(p.ext), game = str(p.game);
@@ -189,6 +198,35 @@ var LunchCore = (function () {
       if (me.balance < 1) err('熊幣不夠了，明天一起點餐就有囉！');
       store.insert('coins', { ext: ext, game: game, cost: 1, note: str(p.note).slice(0, 60), createdAt: tp(now()).iso });
       return pointsOf(ext);
+    }
+
+    // ---------- 推薦新菜單 ----------
+    function recOut(x) { return { id: str(x.id), ext: str(x.ext), name: str(x.name), shop: str(x.shop), phone: str(x.phone), note: str(x.note), images: arr(x.images),
+      status: str(x.status) || 'new', shopId: str(x.shopId), createdAt: str(x.createdAt), updatedAt: str(x.updatedAt) }; }
+    function saveRec(p) {
+      var ext = str(p.ext), imgs = (p.images || []).filter(function (u) { return /^(https?:|data:image)/.test(String(u)); }).slice(0, 6);
+      if (!ext) err('請輸入你的分機');
+      if (!imgs.length) err('請至少拍一張菜單照片');
+      var t = tp(now()).iso, rec = { id: uid('r'), ext: ext, name: str(p.name).slice(0, 20), shop: str(p.shop).slice(0, 40), phone: str(p.phone).slice(0, 30),
+        note: str(p.note).slice(0, 80), images: JSON.stringify(imgs), status: 'new', shopId: '', createdAt: t, updatedAt: t };
+      var before = pointsOf(ext).recToday;
+      store.insert('recs', rec);
+      return { rec: recOut(rec), bonus: before ? 0 : 1, me: pointsOf(ext) };
+    }
+    function recs() { return store.all('recs').map(recOut).sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; }); }
+    function setRec(p) {
+      var id = str(p.id), st = ['new', 'kept', 'adopted'].indexOf(p.status) >= 0 ? p.status : 'kept';
+      if (!store.all('recs').some(function (x) { return str(x.id) === id; })) err('找不到這則推薦');
+      store.update('recs', 'id', id, { status: st, updatedAt: tp(now()).iso });
+      return recs();
+    }
+    function adoptRec(p) {
+      var id = str(p.id), r = recs().filter(function (x) { return x.id === id; })[0];
+      if (!r) err('找不到這則推薦');
+      var s = p.shop || {};
+      var shop = saveShop({ name: str(s.name) || r.shop, type: s.type, category: s.category, phone: str(s.phone) || r.phone, minOrder: s.minOrder, note: str(s.note) || r.note, images: r.images, active: true });
+      store.update('recs', 'id', id, { status: 'adopted', shopId: shop.id, shop: shop.name, updatedAt: tp(now()).iso });
+      return { shop: shop, recs: recs() };
     }
 
     // ---------- 同事操作 ----------
@@ -246,7 +284,7 @@ var LunchCore = (function () {
       var t = tp(now()), D = loadAll(), from = addDays(t.date, -45);
       var list = D.groups.filter(function (g) { return !g.cancelled && g.endAt >= from; })
         .sort(function (a, b) { return a.endAt < b.endAt ? 1 : -1; }).map(function (g) { return full(g, D, t); });
-      return { now: t, groups: list, vote: voteTally(voteTarget(t, D)), voteToday: voteTally(t.date) };
+      return { now: t, groups: list, vote: voteTally(voteTarget(t, D)), voteToday: voteTally(t.date), recNew: store.all('recs').filter(function (x) { return (str(x.status) || 'new') === 'new'; }).length };
     }
     function saveGroup(d) {
       var t = tp(now()), kind = ['bento', 'drink', 'other'].indexOf(d.kind) >= 0 ? d.kind : 'bento', mode = d.mode === 'link' ? 'link' : 'here';
@@ -329,12 +367,13 @@ var LunchCore = (function () {
       home: home,
       group: function (p) { return groupDetail(str(p.id)); },
       saveCart: saveCart, deleteMine: deleteMine, mark: mark, vote: vote,
-      points: function (p) { return pointsOf(p.ext); }, play: play,
+      points: function (p) { return pointsOf(p.ext); }, play: play, saveRec: saveRec,
       shopsPublic: function () { return shops().filter(function (s) { return s.active; }); }
     };
     var adminApi = {
       login: function () { return { ok: true }; },
       adminGroups: adminGroups,
+      recs: function () { return recs(); }, setRec: setRec, adoptRec: adoptRec,
       adminGroup: function (p) { return adminGroup(str(p.id)); },
       saveGroup: function (p) { return saveGroup(p.group || {}); },
       cancelGroup: function (p) { return cancelGroup(str(p.id)); },
@@ -350,6 +389,7 @@ var LunchCore = (function () {
       try {
         var a = p.action;
         if (publicApi[a]) return { ok: true, data: publicApi[a](p) };
+        if (opt.extraPublic && opt.extraPublic[a]) return { ok: true, data: opt.extraPublic[a](p) };
         if (adminApi[a] || (opt.extraAdmin && opt.extraAdmin[a])) {
           if (!opt.checkPassword || !opt.checkPassword(p.pw)) err('密碼錯誤');
           return { ok: true, data: adminApi[a] ? adminApi[a](p) : opt.extraAdmin[a](p) };

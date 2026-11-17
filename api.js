@@ -10,6 +10,7 @@
     var t = LunchCore.tp(), today = t.date;
     if (!db || db.seedDay !== today) db = seed(t);
     if (!db.coins) db.coins = [];
+    if (!db.recs) db.recs = [];
     function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
     save();
     function S(o) { var c = {}; for (var k in o) c[k] = o[k] === undefined || o[k] === null ? '' : String(o[k]); return c; }
@@ -23,7 +24,7 @@
     };
   }
   function seed(t) {
-    var A = LunchCore.addDays, db = { seedDay: t.date, shops: [], groups: [], orders: [], marks: [], votes: [], coins: [] }, n = 0;
+    var A = LunchCore.addDays, db = { seedDay: t.date, shops: [], groups: [], orders: [], marks: [], votes: [], coins: [], recs: [] }, n = 0;
     (window.LUNCH_SEED_SHOPS || []).forEach(function (s) {
       db.shops.push({ id: s.id, name: s.name, type: s.type, category: s.category, phone: s.phone, minOrder: s.minOrder, note: s.note, images: JSON.stringify(s.images), active: '1', createdAt: '' });
     });
@@ -53,6 +54,8 @@
       p[2].forEach(function (pr, j) { o(id, String(201 + j), '', ['招牌飯', '雞腿飯', '排骨飯'][j % 3], 1, pr, { paid: 1, picked: 1 }); });
     });
     [['便當飯類', 4], ['麵食水餃', 2], ['異國料理', 3], ['小吃', 1]].forEach(function (v) { for (var k = 0; k < v[1]; k++) db.votes.push({ target: '', ext: 'v' + v[0] + k, choice: v[0], createdAt: '' }); });
+    db.recs.push({ id: 'r1', ext: '252', name: '小芳', shop: '巷口牛肉麵', phone: '02-2790-1234', note: '湯頭很濃，可以外送', images: JSON.stringify(['dm/s07-1.jpg']), status: 'new', shopId: '', createdAt: t.iso, updatedAt: t.iso });
+    db.recs.push({ id: 'r2', ext: '107', name: 'mary', shop: '', phone: '', note: '公司對面新開的燒肉飯', images: JSON.stringify(['dm/s03-1.jpg']), status: 'new', shopId: '', createdAt: t.iso, updatedAt: t.iso });
     return db;
   }
   function plus(t, min) { return new Date(Date.parse(t.dt + ':00Z') + min * 60000).toISOString().slice(11, 16); }
@@ -64,7 +67,8 @@
     var vt = core;
     core = LunchCore.create(store, {
       checkPassword: function (pw) { return pw === '1234'; },
-      extraAdmin: { uploadImage: function (p) { return { url: p.data }; } }
+      extraAdmin: { uploadImage: function (p) { return { url: p.data }; } },
+      extraPublic: { uploadRecImage: function (p) { return { url: p.data }; } }
     });
     var h0 = core.handle({ action: 'home' });
     if (h0.ok) store.all('votes').forEach(function (v) { if (!v.target) store.update('votes', 'ext', v.ext, { target: h0.data.vote.target }); });

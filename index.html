@@ -25,9 +25,17 @@
 @keyframes wave{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
 .bub{background:#fff;border:1.5px solid var(--line);border-radius:18px 18px 18px 4px;padding:10px 14px;flex:1;position:relative;animation:fadeup .5s both}
 .bub b{display:block;font-size:17px;line-height:1.35}.bub span{font-size:13px;color:var(--sub)}
-.clock{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.clock div{background:#fff;border:1.5px solid var(--line);border-radius:var(--r);padding:8px 14px}
-.clock small{font-size:12px;color:var(--sub);font-weight:700}.clock b{display:block;font-size:24px;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+.dt{display:grid;grid-template-columns:34% minmax(0,1fr);gap:10px;margin:2px 0 18px}
+.cal{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 0 #E6D3B5,0 10px 16px rgba(80,50,0,.14);text-align:center}
+.cal .hd{background:#D93A30;color:#fff;font-weight:900;font-size:13px;padding:4px 0;position:relative}
+.cal .hd:before,.cal .hd:after{content:"";position:absolute;top:-4px;width:7px;height:13px;border-radius:4px;background:#7A5236}.cal .hd:before{left:24%}.cal .hd:after{right:24%}
+.cal .d{font-size:42px;font-weight:900;line-height:1.05;padding-top:4px}.cal .w{font-size:13px;color:var(--sub);font-weight:800;padding-bottom:8px}
+.clk{min-width:0;border-radius:16px;background:linear-gradient(180deg,#FFE7B8,#FFD889);box-shadow:0 6px 0 #D9A24A,0 10px 16px rgba(120,70,0,.18);display:flex;flex-direction:column;justify-content:center;padding:8px 14px;position:relative;overflow:hidden}
+.clk:before{content:"";position:absolute;left:10px;right:10px;top:5px;height:5px;border-radius:5px;background:rgba(255,255,255,.55)}
+.clk .lb{font-size:12px;font-weight:900;color:#8A5A12;display:flex;justify-content:space-between;gap:6px;white-space:nowrap}
+.clk .t{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-weight:900;color:#7A3E0A;font-size:clamp(30px,9vw,44px);letter-spacing:-1px;white-space:nowrap;line-height:1.1;font-variant-numeric:tabular-nums;position:relative}
+.clk .t .c{animation:cblink 1s steps(1) infinite;color:#C97C10}@keyframes cblink{50%{opacity:.25}}
+.clk .bear{position:absolute;right:-10px;bottom:-12px;width:62px;opacity:.16}
 .k-bento{--c1:var(--b1);--c2:var(--b2);--c3:var(--b3);--c4:var(--b4)}
 .k-drink{--c1:var(--d1);--c2:var(--d2);--c3:var(--d3);--c4:var(--d4)}
 .k-other{--c1:var(--o1);--c2:var(--o2);--c3:var(--o3);--c4:var(--o4)}
@@ -136,15 +144,22 @@
 .people .chip.on{background:var(--ink)!important;border-color:var(--ink)!important;color:#fff}
 .tk.tlv1{box-shadow:0 0 0 2px #E8B98C}.tk.tlv2{box-shadow:0 0 0 2px #C9D1D9}.tk.tlv3{box-shadow:0 0 0 2px #FFD54A,0 0 10px rgba(244,180,26,.6)}.tk.tlv4{box-shadow:0 0 0 2px #B36BFF,0 0 10px rgba(179,107,255,.5)}
 .tk.tlv4 b:after{content:" 👑";font-size:12px}
-.coinbar{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);width:min(560px,calc(100% - 20px));border-radius:20px;background:linear-gradient(180deg,#FFE9A0,#F7BE2E);border:2px solid #D98A0A;box-shadow:0 6px 18px rgba(120,70,0,.3);display:flex;align-items:center;gap:8px;padding:7px 8px 7px 6px;z-index:40;cursor:pointer;transition:transform .3s,opacity .3s}
+.coinbar{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);width:min(560px,calc(100% - 20px));display:grid;grid-template-columns:1.25fr 1fr;gap:6px;z-index:40;transition:transform .3s,opacity .3s;filter:drop-shadow(0 6px 12px rgba(80,50,0,.28))}
+.coinbar.unk{grid-template-columns:1.35fr 1fr}
+.coinbar.unk .cbc input{width:52px;flex:1}
 .coinbar.hidebar{transform:translate(-50%,140%);opacity:0}
-.coinbar .c{width:40px;height:40px;flex:none;animation:cspin 3s linear infinite}@keyframes cspin{50%{transform:rotateY(180deg)}}
-.coinbar .t{flex:1;line-height:1.25;min-width:0}.coinbar .t b{display:block;font-size:15px;color:#5A3300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.coinbar .t span{font-size:12px;color:#8A5A12}
-.coinbar .go{background:#5A3300;color:#FFE38A;font-weight:900;border-radius:999px;padding:7px 12px;font-size:13px;white-space:nowrap;border:none;animation:cpulse 1.8s ease-in-out infinite}
-@keyframes cpulse{50%{transform:scale(1.07)}}
-.coinbar input{width:78px;border:1.5px solid #D98A0A;border-radius:10px;padding:6px 8px;font-weight:800;text-align:center;font-size:16px}
-.coinbar .lvt{display:inline-block;font-size:10px;font-weight:900;background:#fff;color:#BA7517;border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:2px}
-.coinbar .plus{position:absolute;right:20px;top:-32px;background:#fff;border:2px solid #F4C778;border-radius:999px;padding:2px 10px;font-weight:900;color:#BA7517;animation:crise 2.2s ease-in-out forwards}
+.cbb{position:relative;display:flex;align-items:center;gap:8px;border-radius:18px;padding:8px 10px;border:2px solid;min-height:58px;line-height:1.2;cursor:pointer;min-width:0}
+.cbb b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cbb small{display:block;font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbb>div{min-width:0}
+.cbc{background:linear-gradient(180deg,#FFE9A0,#F7BE2E);border-color:#D98A0A;color:#5A3300}
+.cbc .c{width:30px;height:30px;flex:none;animation:cspin 3s linear infinite}@keyframes cspin{50%{transform:rotateY(180deg)}}
+.cbc input{flex:1;width:auto;min-width:0;border:1.5px solid #D98A0A;border-radius:9px;padding:4px 6px;font-weight:800;text-align:center;font-size:16px;background:#fff}
+.cbc .go{background:#5A3300;color:#FFE38A;border:none;border-radius:999px;padding:5px 10px;font-weight:900;font-size:12px;white-space:nowrap}
+.cbr{background:linear-gradient(180deg,#EAFBF4,#A8E6CF);border-color:#1D9E75;color:#085041}
+.cbr .ic{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:19px;background:#fff;box-shadow:inset 0 0 0 2px #1D9E75}
+.cbr .ic span{animation:wig 2.6s ease-in-out infinite;display:inline-block}@keyframes wig{0%,84%,100%{transform:none}90%{transform:rotate(-12deg) scale(1.12)}95%{transform:rotate(8deg)}}
+.coinbar .lvt{display:inline-block;font-size:10px;font-weight:900;background:#fff;color:#BA7517;border-radius:999px;padding:0 6px;margin-left:3px;vertical-align:1px}
+.coinbar .plus{position:absolute;left:14px;top:-32px;background:#fff;border:2px solid #F4C778;border-radius:999px;padding:2px 10px;font-weight:900;color:#BA7517;animation:crise 2.2s ease-in-out forwards}
 @keyframes crise{0%{opacity:0;transform:translateY(10px)}20%,75%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8px)}}
 .cpop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#fff;border:2px solid #F4C778;border-radius:22px;padding:16px 22px;text-align:center;box-shadow:0 10px 30px rgba(58,42,30,.25);z-index:90;animation:cpop 2.4s ease forwards;pointer-events:none;width:250px}
 .cpop img{width:70px;animation:cspin 1s linear infinite}.cpop b{display:block;font-size:22px;color:#BA7517}.cpop span{font-size:13px;color:var(--sub)}
@@ -184,6 +199,18 @@
 .hole .pt{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-weight:900;color:#D93A30;pointer-events:none;animation:fadeup .5s both}
 .hud{display:flex;justify-content:space-between;font-weight:900;font-size:18px}
 .lvlist{font-size:13px;color:var(--sub);margin-top:8px}.lvlist div{display:flex;justify-content:space-between;padding:3px 0;border-top:1px dashed var(--line)}.lvlist div.cur{color:#633806;font-weight:800}
+.rs-h{display:flex;gap:10px;align-items:center;margin-bottom:10px}.rs-h img{width:56px}.rs-h b{font-size:19px;display:block;color:#085041}.rs-h span{font-size:13px;color:var(--sub)}
+.rs-x{margin-left:auto;align-self:flex-start;border:none;background:#fff;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px}
+.rs-rw{background:var(--b1);border-radius:12px;padding:8px 10px;font-size:13px;color:var(--b4);margin-bottom:12px;display:flex;gap:8px;align-items:center}.rs-rw img{width:26px}
+.rs-f{margin-bottom:10px}.rs-f .req{color:#D93A30}
+.rs-cam{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.rs-cam label{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:2px dashed #1D9E75;background:#EAFBF4;color:#085041;border-radius:14px;padding:12px 6px;font-size:15px;cursor:pointer}
+.rs-cam label .e{font-size:28px}.rs-cam input{display:none}
+.rs-th{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}.rs-th div{position:relative}.rs-th img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.rs-th button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;padding:0;border-radius:50%;background:var(--no2);color:#fff;border:none;font-size:12px}
+.rs-err{color:var(--no2);font-size:13px;margin:2px 0 8px;display:none}
+.rs-send{width:100%;background:#1D9E75;border-color:#1D9E75;color:#fff;font-size:18px;padding:14px}
+.rs-done{text-align:center;padding:10px 0 4px}.rs-done img{width:120px;animation:jump 1s ease-in-out infinite}.rs-done h3{margin:8px 0 4px;color:#085041}.rs-done p{margin:0 0 14px;color:var(--sub)}
 .foot{text-align:center;padding:16px 0 8px}
 .foot a{color:var(--mute);font-size:13px;text-decoration:none}
 .foot div{color:var(--mute);font-size:12px;margin-top:4px}
@@ -201,7 +228,8 @@
 <div class="wrap">
   <div id="demoBar" class="demo hide">試用版：資料只存在你這台裝置，可以放心亂按。<a href="admin.html">前往管理員後台 →</a></div>
   <div class="hello"><img id="mascot" src="img/tom_full.png" alt="TOM"><div class="bub" id="bub"><b>TOM 正在準備今天的菜單…</b></div></div>
-  <div class="clock"><div><small>今天</small><b id="today">--</b></div><div><small>現在時間</small><b id="clock">--:--:--</b></div></div>
+  <div class="dt"><div class="cal"><div class="hd" id="calM">--</div><div class="d" id="calD">--</div><div class="w" id="calW">--</div></div>
+    <div class="clk"><div class="lb"><span>現在時間</span><span id="clkDl"></span></div><div class="t" id="clock">--:--:--</div><img class="bear" src="img/logo_frame.png" alt=""></div></div>
   <div id="cards"><div class="loading"><img src="img/logo_frame.png" alt="">讀取中…</div></div>
   <div id="detail"></div>
   <div id="after"></div>
@@ -210,6 +238,8 @@
 <div class="viewer hide" id="viewer"><div class="vbar"><b id="vTitle"></b><button id="vZoom">🔍 放大</button><button class="close" id="vClose">縮小 ✕</button></div><div class="vbody" id="vBody"></div></div>
 <div class="coinbar hide" id="coinbar"></div>
 <div class="csheet-bg" id="csBg"></div>
+<div class="csheet-bg" id="rsBg"></div>
+<div class="csheet" id="rs"></div>
 <div class="csheet" id="cs"></div>
 <div class="toast" id="toast"></div>
 
@@ -258,8 +288,9 @@ function pct(g){return g.min?Math.min(100,Math.round(g.total.amount/g.min*100)):
 // ---------- 時鐘 ----------
 function tick(){
   var t=new Date(nowMs()+8*3600e3);
-  $('clock').textContent=pad(t.getUTCHours())+':'+pad(t.getUTCMinutes())+':'+pad(t.getUTCSeconds());
-  $('today').textContent=(t.getUTCMonth()+1)+'/'+t.getUTCDate()+'（'+WEEK[t.getUTCDay()]+'）';
+  $('clock').innerHTML=pad(t.getUTCHours())+'<span class="c">:</span>'+pad(t.getUTCMinutes())+'<span class="c">:</span>'+pad(t.getUTCSeconds());
+  $('calM').textContent=(t.getUTCMonth()+1)+' 月';$('calD').textContent=t.getUTCDate();$('calW').textContent='星期'+WEEK[t.getUTCDay()];
+  var nb=H&&H.groups.filter(function(g){return g.state==='open'&&g.mode!=='link'})[0];$('clkDl').textContent=nb?'⏰ '+nb.endAt.slice(11,16)+' 結單':'';
   if(!H) return;
   var need=false;
   H.groups.forEach(function(g){
@@ -537,31 +568,34 @@ function load(first){
   .then(function(){busy=false});
 }
 // ---------- 熊幣 ----------
-var CM=null, coinPrevEarned=null, CSTAB='gacha';
+var CM=null, coinPrevEarned=null, CSTAB='gacha', coinLabel='', popMsg='';
 var FORTUNE=[['大吉','今天的便當會多一塊肉（大概）'],['中吉','排隊領便當時，你會是第一個'],['大吉','今天下午的會議會準時結束'],['小吉','飲料去冰也很好喝，相信自己'],['中吉','老闆今天看你特別順眼'],['大吉','你點的那道，就是今天的人氣王'],['末吉','今天吃飽就是贏，其他的明天再說'],['小吉','記得付款，TOM 會偷偷記住你的好'],['大吉','下一次扭蛋會更好，TOM 掛保證'],['中吉','吃完午餐的你，戰鬥力 +30%'],['大吉','今天的你，比滷蛋還有光澤'],['中吉','今天的工作會像便當一樣，一格一格剛剛好']];
 var JOKES=['滷蛋為什麼總是笑笑的？因為它很有「蛋」量。','便當問排骨：你怎麼這麼酥？排骨說：被炸過一次，就看開了。','最健康的運動是什麼？走去櫃檯領便當。','飯後一杯飲料，煩惱少一半；兩杯？那是錢包少一半。','JOY 說：珍珠奶茶不是飲料，是一種心情。','吃飽的人沒有煩惱，只有睡意。','白飯為什麼人緣好？因為它跟誰都配。','TOM 說：今天的熱量不用擔心，下午開會就會用掉了。','燙青菜很低調，但大家都知道它是為你好。','雞腿飯的人生哲學：外酥內嫩，對自己好一點。'];
 function rnd(a){return a[Math.floor(Math.random()*a.length)]}
 var LVN=['Lv1 新手熊','Lv2 便當見習熊','Lv3 午餐達人熊','Lv4 揪團高手熊','Lv5 湯姆熊傳說'],LVA=[0,1,15,30,60],LVF=['一般外框','銅色外框','銀色外框','金色閃光外框','彩虹流光＋皇冠'];
-function drawBar(plus){
+var REC_BTN='<div class="cbb cbr" id="recBtn"><span class="ic"><span>📸</span></span><div><b>推薦新菜單</b><small>拍菜單送熊幣</small></div></div>';
+function drawBar(plus,label){
   var b=$('coinbar');b.classList.remove('hide');
-  if(!CM||!me.ext){b.innerHTML='<img class="c" src="img/coin-64.png" alt=""><div class="t"><b>熊幣樂園</b><span>一起點餐就送熊幣，可以玩遊戲</span></div><input id="cbExt" inputmode="numeric" placeholder="分機" value="'+esc(me.ext||'')+'"><button class="go" id="cbGo">查詢</button>';
+  if(!CM||!me.ext){b.classList.add('unk');b.innerHTML='<div class="cbb cbc" style="gap:6px"><img class="c" src="img/coin-64.png" alt="" style="width:28px;height:28px"><b style="overflow:visible">查熊幣</b><input id="cbExt" inputmode="numeric" placeholder="分機" value="'+esc(me.ext||'')+'"><button class="go" id="cbGo">查</button></div>'+REC_BTN;
     $('cbGo').onclick=function(e){e.stopPropagation();var v=$('cbExt').value.trim();if(!v){$('cbExt').focus();return toast('請輸入分機',1)}me.ext=v;saveMe();if($('ext')&&!$('ext').value&&!proxy)$('ext').value=v;drawPeople();loadCoins(false,true)};
-    $('cbExt').onclick=function(e){e.stopPropagation()};$('cbExt').onkeydown=function(e){if(e.key==='Enter')$('cbGo').click()};
-    b.onclick=function(){$('cbExt').focus()};return}
-  var nm=CM.name||me.name||'';
-  b.innerHTML=(plus?'<span class="plus">+'+plus+' 🪙</span>':'')+'<img class="c" src="img/coin-64.png" alt=""><div class="t"><b>'+(plus?'點餐成功！熊幣 +'+plus:(nm?esc(nm)+'，':'分機 '+esc(CM.ext)+'，')+'你有 '+CM.balance+' 枚熊幣')+'<span class="lvt">Lv'+(CM.level+1)+'</span></b><span>'+(plus?'現在有 '+CM.balance+' 枚，要不要轉個午餐扭蛋？':(CM.balance?'花 1 枚玩扭蛋或打 TOM':'一起點餐就能拿熊幣'))+'</span></div><button class="go">去玩 ›</button>';
-  b.onclick=openCS;
+    $('cbExt').onkeydown=function(e){if(e.key==='Enter')$('cbGo').click()};
+  }else{
+    b.classList.remove('unk');var nm=CM.name||me.name||'分機 '+CM.ext;
+    b.innerHTML='<div class="cbb cbc" id="coinBtn">'+(plus?'<span class="plus">+'+plus+' 🪙</span>':'')+'<img class="c" src="img/coin-64.png" alt=""><div><b>'+(plus?(label||'熊幣')+' +'+plus+'！':esc(nm)+' '+CM.balance+' 枚<span class="lvt">Lv'+(CM.level+1)+'</span>')+'</b><small>'+(plus?'現在 '+CM.balance+' 枚・去玩一把':(CM.balance?'點我玩扭蛋、打 TOM':'一起點餐就能拿熊幣'))+'</small></div></div>'+REC_BTN;
+    $('coinBtn').onclick=openCS;
+  }
+  $('recBtn').onclick=openRec;
 }
 function loadCoins(checkGain,open){
   if(!me.ext){CM=null;drawBar();return Promise.resolve()}
   return LunchAPI.call('points',{ext:me.ext}).then(function(r){
     var gain=(checkGain&&coinPrevEarned!==null)?r.earned-coinPrevEarned:0;var up=CM&&r.level>CM.level;
-    CM=r;coinPrevEarned=r.earned;drawBar(gain>0?gain:0);
-    if(gain>0)coinPop(gain,up);
+    CM=r;coinPrevEarned=r.earned;drawBar(gain>0?gain:0,coinLabel);coinLabel='';checkAdopted();
+    if(gain>0)coinPop(gain,up,popMsg);popMsg='';
     if(open)openCS();
   }).catch(function(){drawBar()});
 }
-function coinPop(n,up){var d=document.createElement('div');d.className='cpop';d.innerHTML='<img src="img/coin-64.png" alt=""><b>+'+n+' 熊幣！</b><span>'+(up?'升級了！你現在是 '+LVN[CM.level]+' 🎉':'謝謝你一起湊低消')+'</span>';document.body.appendChild(d);setTimeout(function(){d.remove()},2500);if(up)burst(document.body)}
+function coinPop(n,up,msg){var d=document.createElement('div');d.className='cpop';d.innerHTML='<img src="img/coin-64.png" alt=""><b>+'+n+' 熊幣！</b><span>'+(up?'升級了！你現在是 '+LVN[CM.level]+' 🎉':(msg||'謝謝你一起湊低消'))+'</span>';document.body.appendChild(d);setTimeout(function(){d.remove()},2500);if(up)burst(document.body)}
 function openCS(){if(!CM)return;drawCS();$('cs').classList.add('open');$('csBg').classList.add('open');document.body.style.overflow='hidden'}
 function closeCS(){$('cs').classList.remove('open');$('csBg').classList.remove('open');document.body.style.overflow='';if(wTimer){clearInterval(wTimer);clearInterval(wPop);wTimer=null}}
 $('csBg').onclick=closeCS;
@@ -573,9 +607,9 @@ function drawCS(){
    '<div style="font-size:13px;color:var(--sub)">累積 <b>'+c.earned+'</b> 枚・玩掉 <b>'+c.spent+'</b> 枚</div><div class="cs-lv"><i style="width:'+pc+'%"></i></div>'+
    '<div style="font-size:13px;color:var(--sub)">'+(nx?'再拿 '+(nx-c.earned)+' 枚升到 '+c.nextName+'，名字會變成'+LVF[c.level+1]:'最高等級！你就是午餐傳說 👑')+'</div>'+
    '<div class="cs-week">'+['一','二','三','四','五'].map(function(d,i){return '<div><span class="'+(c.week[i]?'on':'')+'"></span>週'+d+'</div>'}).join('')+'</div>'+
-   '<div class="cs-bd"><span>🍱 點便當 <b>'+bd.bento+'</b> 天</span><span>🧋 點飲料 <b>'+bd.drink+'</b> 天</span><span>✨ 其他揪團 <b>'+bd.other+'</b> 團</span><span>🏆 成團功臣 <b>'+bd.hero+'</b> 次</span><span>🔥 連續 5 天 <b>+'+bd.streak+'</b></span></div></div>'+
+   '<div class="cs-bd"><span>🍱 點便當 <b>'+bd.bento+'</b> 天</span><span>🧋 點飲料 <b>'+bd.drink+'</b> 天</span><span>✨ 其他揪團 <b>'+bd.other+'</b> 團</span><span>🏆 成團功臣 <b>'+bd.hero+'</b> 次</span><span>🔥 連續 5 天 <b>+'+bd.streak+'</b></span><span>📸 推薦菜單 <b>'+(bd.recSent||0)+'</b> 天</span><span>🌟 推薦被採用 <b>'+(bd.recAdopted||0)+'</b> 次</span></div></div>'+
    '<div class="cs-card"><div class="cs-tabs" id="csTabs"><button data-g="gacha"'+(CSTAB==='gacha'?' class="on"':'')+'>🎰 午餐扭蛋</button><button data-g="whack"'+(CSTAB==='whack'?' class="on"':'')+'>🔨 打 TOM</button></div><div id="game"></div></div>'+
-   '<details class="cs-card"><summary style="font-weight:800;cursor:pointer">怎麼拿熊幣、等級有什麼</summary><div style="font-size:14px;margin-top:6px;line-height:1.8">🍱 當天有點便當 +1<br>🧋 當天有點飲料，或線上點餐按「我點好了」+1<br>✨ 參加其他揪團 +1（每團）<br>🏆 成團功臣：送出時剛好讓大家成團 +1<br>🔥 連續 5 個工作天都點便當 +2</div>'+
+   '<details class="cs-card"><summary style="font-weight:800;cursor:pointer">怎麼拿熊幣、等級有什麼</summary><div style="font-size:14px;margin-top:6px;line-height:1.8">🍱 當天有點便當 +1<br>🧋 當天有點飲料，或線上點餐按「我點好了」+1<br>✨ 參加其他揪團 +1（每團）<br>🏆 成團功臣：送出時剛好讓大家成團 +1<br>🔥 連續 5 個工作天都點便當 +2<br>📸 推薦新菜單 +1（每天一次）<br>🌟 推薦被管理員採用 +1</div>'+
    '<div class="lvlist">'+LVN.map(function(n,i){return '<div class="'+(i===c.level?'cur':'')+'"><span>'+n+'（'+LVA[i]+' 枚）</span><span>'+LVF[i]+'</span></div>'}).join('')+'</div></details>';
   $('csX').onclick=closeCS;
   $('csTabs').onclick=function(e){var b=e.target.closest('[data-g]');if(!b)return;CSTAB=b.dataset.g;if(wTimer){clearInterval(wTimer);clearInterval(wPop);wTimer=null}drawCS()};
@@ -610,9 +644,57 @@ function drawWhack(){
     }).catch(function(e){toast(e.message,1)})};
 }
 // 輸入時把熊幣列藏起來，避免擋到
-document.addEventListener('focusin',function(e){if(e.target.closest&&e.target.closest('#cartCard,#after,#peopleCard'))$('coinbar').classList.add('hidebar')});
+document.addEventListener('focusin',function(e){if(e.target.closest&&e.target.closest('#cartCard,#after,#peopleCard,#rs'))$('coinbar').classList.add('hidebar')});
 document.addEventListener('focusout',function(){setTimeout(function(){var a=document.activeElement;if(!a||!a.closest||!a.closest('#cartCard,#after,#peopleCard'))$('coinbar').classList.remove('hidebar')},150)});
 document.body.style.paddingBottom='96px';
+
+// ---------- 推薦新菜單 ----------
+var recPics=[];
+function shrinkImg(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
+  var sc=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+  var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
+function openRec(){recPics=[];drawRec();$('rs').classList.add('open');$('rsBg').classList.add('open');document.body.style.overflow='hidden'}
+function closeRec(){$('rs').classList.remove('open');$('rsBg').classList.remove('open');document.body.style.overflow=''}
+$('rsBg').onclick=closeRec;
+function drawRec(){
+  $('rs').innerHTML='<div class="rs-h"><img src="img/joy_head.png" alt="JOY"><div><b>我要推薦新菜單</b><span>在外面看到好吃的？拍下菜單，JOY 幫你交給管理員</span></div><button class="rs-x" id="rsX" aria-label="關閉">✕</button></div>'+
+   '<div class="rs-rw"><img src="img/coin-64.png" alt=""><span>送出 <b>+1 熊幣</b>（每天一次），被管理員採用再 <b>+1 熊幣</b>！</span></div>'+
+   '<div class="rs-f"><label>你的分機 <span class="req">*</span></label><input id="rsExt" inputmode="numeric" placeholder="例如 226" value="'+esc(me.ext||'')+'"></div>'+
+   '<div class="grid2 rs-f"><div><label>餐廳名稱（選填）</label><input id="rsShop" placeholder="例如 巷口牛肉麵"></div><div><label>電話（選填）</label><input id="rsPhone" inputmode="tel" placeholder="02-1234-5678"></div></div>'+
+   '<label>菜單照片 <span class="req" style="color:#D93A30">*</span>（至少一張）</label>'+
+   '<div class="rs-cam"><label><span class="e">📷</span>拍照<input type="file" accept="image/*" capture="environment" id="rsCam"></label><label><span class="e">🖼️</span>從相簿選<input type="file" accept="image/*" multiple id="rsAlb"></label></div>'+
+   '<div class="rs-th" id="rsTh"></div><div class="rs-err" id="rsErr"></div>'+
+   '<div class="rs-f"><label>一句話推薦（選填）</label><input id="rsNote" maxlength="80" placeholder="例如 排骨超大塊、可以外送"></div>'+
+   '<button class="rs-send" id="rsSend">送出推薦</button><button class="ghost" id="rsNo" style="width:100%;margin-top:6px">先不要</button>';
+  $('rsX').onclick=closeRec;$('rsNo').onclick=closeRec;
+  function add(fs){[].slice.call(fs).forEach(function(f){if(recPics.length>=6)return toast('最多 6 張',1);shrinkImg(f).then(function(d){recPics.push(d);drawTh()}).catch(function(){toast('這張照片讀不到，換一張試試',1)})})}
+  $('rsCam').onchange=function(){add(this.files);this.value=''};$('rsAlb').onchange=function(){add(this.files);this.value=''};
+  $('rsSend').onclick=sendRec;drawTh();
+}
+function drawTh(){var t=$('rsTh');if(!t)return;t.innerHTML=recPics.map(function(p,i){return '<div><img src="'+p+'" alt=""><button data-x="'+i+'">✕</button></div>'}).join('');
+  t.onclick=function(e){var b=e.target.closest('[data-x]');if(b){recPics.splice(+b.dataset.x,1);drawTh()}};if(recPics.length)$('rsErr').style.display='none'}
+function recErr(m,el){var e=$('rsErr');e.textContent=m;e.style.display='block';if(el)el.focus();toast(m,1)}
+function sendRec(){
+  var ext=$('rsExt').value.trim();if(!ext)return recErr('請輸入你的分機，讓管理員知道是誰推薦的',$('rsExt'));
+  if(!recPics.length)return recErr('請至少拍一張菜單照片');
+  var b=$('rsSend'),urls=[],i=0;b.disabled=true;
+  (function next(){
+    if(i>=recPics.length){b.innerHTML='<span class="spin"></span> 送出中';
+      return LunchAPI.call('saveRec',{ext:ext,name:me.ext===ext?(me.name||''):'',shop:$('rsShop').value.trim(),phone:$('rsPhone').value.trim(),note:$('rsNote').value.trim(),images:urls}).then(function(r){
+        if(!me.ext){me.ext=ext;saveMe()}
+        var nm=r.rec.shop||'這家店';
+        $('rs').innerHTML='<div class="rs-done"><img src="img/joy.png" alt="JOY"><h3>謝謝你的推薦！</h3><p>JOY 已經把「'+esc(nm)+'」交給管理員<br>'+(r.bonus?'熊幣 +1，':'今天的推薦熊幣已經拿過囉，')+'被採用再送 +1 🎉</p><button class="primary" id="rsOk" style="width:100%">好的</button></div>';
+        $('rsOk').onclick=closeRec;
+        if(me.ext===ext){coinLabel='推薦熊幣';popMsg='謝謝你推薦新菜單';loadCoins(true)}
+      }).catch(function(e){b.disabled=false;b.textContent='送出推薦';recErr(e.message)})}
+    b.innerHTML='<span class="spin"></span> 上傳照片 '+(i+1)+' / '+recPics.length;
+    LunchAPI.call('uploadRecImage',{ext:ext,data:recPics[i],mime:'image/jpeg'}).then(function(r){urls.push(r.url);i++;next()}).catch(function(e){b.disabled=false;b.textContent='送出推薦';recErr('照片上傳失敗：'+e.message)});
+  })();
+}
+function checkAdopted(){if(!CM||!CM.adopted||!CM.adopted.length)return;var seen={};try{seen=JSON.parse(localStorage.getItem('recSeen')||'{}')}catch(e){}
+  var n=CM.adopted.filter(function(a){return !seen[a.id]})[0];if(!n)return;seen[n.id]=1;try{localStorage.setItem('recSeen',JSON.stringify(seen))}catch(e){}
+  var d=document.createElement('div');d.className='cpop';d.style.pointerEvents='auto';d.style.animation='none';d.innerHTML='<img src="img/joy_head.png" alt="" style="animation:none;border-radius:50%"><b style="color:#0F6E56">你推薦的菜單被採用了！</b><span>「'+esc(n.shop)+'」已經加進店家 DM<br>熊幣 +1 🎉</span><button class="primary" style="margin-top:10px;width:100%">太好了</button>';
+  document.body.appendChild(d);burst(document.body);d.querySelector('button').onclick=function(){d.remove()}}
 
 // ---------- 重新整理與新版本提示 ----------
 function hasDraft(){return cart.some(function(c){return c.item&&c.item.trim()})}
