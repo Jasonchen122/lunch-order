@@ -1,207 +1,284 @@
 // ===== 共用邏輯 =====
-// 共用邏輯：Google Apps Script 後端與網頁「試玩模式」都用同一份
+// 共用邏輯 v2：Google Apps Script 後端與網頁「試玩模式」都用同一份
 var LunchCore = (function () {
   var HEAD = {
     shops: ['id', 'name', 'type', 'category', 'phone', 'minOrder', 'note', 'images', 'active', 'createdAt'],
-    days: ['date', 'bentoShopId', 'bentoShopName', 'bentoMin', 'bentoDeadline', 'hasDrink', 'drinkShopId', 'drinkShopName', 'drinkMin', 'drinkDeadline', 'message', 'updatedAt'],
-    orders: ['id', 'date', 'ext', 'name', 'kind', 'item', 'qty', 'price', 'amount', 'sugar', 'ice', 'note', 'paid', 'picked', 'createdAt', 'updatedAt']
+    groups: ['id', 'kind', 'title', 'shopId', 'mode', 'link', 'min', 'startAt', 'endAt', 'closeAt', 'desc', 'emoji', 'images', 'message', 'cancelled', 'createdAt', 'updatedAt'],
+    orders: ['id', 'groupId', 'ext', 'name', 'item', 'qty', 'price', 'amount', 'sugar', 'ice', 'note', 'paid', 'picked', 'createdAt', 'updatedAt'],
+    marks: ['groupId', 'ext', 'name', 'createdAt'],
+    votes: ['target', 'ext', 'choice', 'createdAt']
   };
+  var KIND_ORDER = { bento: 0, drink: 1, other: 2 };
+  var VOTE_CHOICES = ['便當飯類', '麵食水餃', '異國料理', '小吃', '熱炒', '都可以'];
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function tp(d) { // 台北時間
     var t = new Date((d || new Date()).getTime() + 8 * 3600000).toISOString();
-    return { date: t.slice(0, 10), hm: t.slice(11, 16), iso: t.slice(0, 19) };
+    return { date: t.slice(0, 10), hm: t.slice(11, 16), dt: t.slice(0, 16), iso: t.slice(0, 19), dow: new Date(t.slice(0, 10) + 'T00:00:00Z').getUTCDay() };
   }
+  function addDays(dt, n) { // dt = 'YYYY-MM-DD' 或 'YYYY-MM-DDTHH:mm'
+    var hasT = dt.length > 10, ms = Date.parse((hasT ? dt : dt + 'T00:00') + ':00Z') + n * 86400000;
+    var s = new Date(ms).toISOString();
+    return hasT ? s.slice(0, 16) : s.slice(0, 10);
+  }
+  function nextWorkday(date) { var d = addDays(date, 1); while ([0, 6].indexOf(new Date(d + 'T00:00:00Z').getUTCDay()) >= 0) d = addDays(d, 1); return d; }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
   function str(v) { return v === null || v === undefined ? '' : String(v).trim(); }
   function bool(v) { return v === true || v === '1' || v === 1 || v === 'TRUE' || v === 'true'; }
   function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function err(m) { throw new Error(m); }
+  function okDT(s) { return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s); }
+  function arr(v) { try { return typeof v === 'string' ? JSON.parse(v || '[]') : (v || []); } catch (e) { return []; } }
 
   function create(store, opt) {
     opt = opt || {};
     var now = opt.now || function () { return new Date(); };
 
+    // ---------- 讀取 ----------
     function shopOut(s) {
-      var imgs = [];
-      try { imgs = typeof s.images === 'string' ? JSON.parse(s.images || '[]') : (s.images || []); } catch (e) { imgs = []; }
       return { id: str(s.id), name: str(s.name), type: str(s.type) || 'bento', category: str(s.category), phone: str(s.phone),
-        minOrder: str(s.minOrder), note: str(s.note), images: imgs, active: s.active === undefined || s.active === '' ? true : bool(s.active) };
+        minOrder: str(s.minOrder), note: str(s.note), images: arr(s.images), active: s.active === undefined || s.active === '' ? true : bool(s.active) };
     }
     function shops() { return store.all('shops').map(shopOut); }
-    function shopById(id) { return shops().filter(function (s) { return s.id === id; })[0] || null; }
-    function dayOut(d) {
-      if (!d) return null;
-      return { date: str(d.date), bentoShopId: str(d.bentoShopId), bentoShopName: str(d.bentoShopName), bentoMin: num(d.bentoMin),
-        bentoDeadline: str(d.bentoDeadline), hasDrink: bool(d.hasDrink), drinkShopId: str(d.drinkShopId), drinkShopName: str(d.drinkShopName),
-        drinkMin: num(d.drinkMin), drinkDeadline: str(d.drinkDeadline), message: str(d.message) };
-    }
-    function getDay(date) { return dayOut(store.all('days').filter(function (d) { return str(d.date) === date; })[0]); }
     function orderOut(o) {
-      return { id: str(o.id), date: str(o.date), ext: str(o.ext), name: str(o.name), kind: str(o.kind), item: str(o.item), qty: num(o.qty),
-        price: num(o.price), amount: num(o.amount), sugar: str(o.sugar), ice: str(o.ice), note: str(o.note), paid: bool(o.paid),
-        picked: bool(o.picked), createdAt: str(o.createdAt), updatedAt: str(o.updatedAt) };
+      return { id: str(o.id), groupId: str(o.groupId), ext: str(o.ext), name: str(o.name), item: str(o.item), qty: num(o.qty), price: num(o.price),
+        amount: num(o.amount), sugar: str(o.sugar), ice: str(o.ice), note: str(o.note), paid: bool(o.paid), picked: bool(o.picked),
+        createdAt: str(o.createdAt), updatedAt: str(o.updatedAt) };
     }
-    function ordersOf(date) { return store.all('orders').map(orderOut).filter(function (o) { return o.date === date; }); }
-    function closed(day, kind) {
-      var t = tp(now()), dl = kind === 'drink' ? day.drinkDeadline : day.bentoDeadline;
-      if (day.date < t.date) return true;
-      if (day.date > t.date) return false;
-      return !!dl && t.hm >= dl;
+    function stateOf(g, t) {
+      if (g.cancelled) return 'cancelled';
+      if (t.dt < g.startAt) return 'upcoming';
+      if (t.dt < g.endAt) return 'open';
+      if (t.dt < g.closeAt) return 'closed';
+      return 'ended';
     }
-    function totals(list, kind) {
-      var a = 0, people = {}, n = 0;
-      list.forEach(function (o) { if (o.kind === kind) { a += o.amount; n += o.qty; people[o.ext] = 1; } });
-      return { amount: a, people: Object.keys(people).length, qty: n };
+    function groupBase(g, shopMap) {
+      var s = shopMap[str(g.shopId)] || null, imgs = arr(g.images);
+      return { id: str(g.id), kind: str(g.kind) || 'bento', title: str(g.title), shopId: str(g.shopId), mode: str(g.mode) || 'here', link: str(g.link),
+        min: num(g.min), startAt: str(g.startAt), endAt: str(g.endAt), closeAt: str(g.closeAt), desc: str(g.desc), emoji: str(g.emoji),
+        images: imgs.length ? imgs : (s ? s.images : []), ownImages: imgs, message: str(g.message), cancelled: bool(g.cancelled),
+        category: s ? s.category : '', phone: s ? s.phone : '', shopNote: s ? s.note : '', createdAt: str(g.createdAt) };
     }
-    function side(day, kind, list) {
-      var id = kind === 'drink' ? day.drinkShopId : day.bentoShopId, s = id ? shopById(id) : null;
-      return { kind: kind, shopId: id, shopName: kind === 'drink' ? day.drinkShopName : day.bentoShopName,
-        category: s ? s.category : '', phone: s ? s.phone : '', note: s ? s.note : '', images: s ? s.images : [],
-        min: kind === 'drink' ? day.drinkMin : day.bentoMin, deadline: kind === 'drink' ? day.drinkDeadline : day.bentoDeadline,
-        closed: closed(day, kind), total: totals(list, kind) };
+    function peopleOf(rows) {
+      var m = {}, list = [];
+      rows.slice().sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; }).forEach(function (o) {
+        var p = m[o.ext];
+        if (!p) { p = m[o.ext] = { ext: o.ext, name: '', items: [], total: 0, unpaid: 0, paid: true, picked: true }; list.push(p); }
+        if (o.name) p.name = o.name;
+        p.items.push({ id: o.id, item: o.item, qty: o.qty, price: o.price, amount: o.amount, sugar: o.sugar, ice: o.ice, note: o.note, paid: o.paid });
+        p.total += o.amount; if (!o.paid) { p.unpaid += o.amount; p.paid = false; } if (!o.picked) p.picked = false;
+      });
+      return list;
     }
-    function summary(date) {
-      var t = tp(now()); date = date || t.date;
-      var day = getDay(date);
-      if (!day) return { now: t, date: date, day: null };
-      var list = ordersOf(date), r = { now: t, date: date, day: day, bento: side(day, 'bento', list), drink: null };
-      if (day.hasDrink) r.drink = side(day, 'drink', list);
+    function totals(rows) {
+      var a = 0, q = 0, pe = {}, paid = 0;
+      rows.forEach(function (o) { a += o.amount; q += o.qty; pe[o.ext] = 1; if (o.paid) paid += o.amount; });
+      return { amount: a, qty: q, people: Object.keys(pe).length, paidAmount: paid };
+    }
+    function loadAll() {
+      var shopMap = {}; shops().forEach(function (s) { shopMap[s.id] = s; });
+      var groups = store.all('groups').map(function (g) { return groupBase(g, shopMap); });
+      var orders = store.all('orders').map(orderOut), byG = {};
+      orders.forEach(function (o) { (byG[o.groupId] = byG[o.groupId] || []).push(o); });
+      var marks = {}; store.all('marks').forEach(function (k) { (marks[str(k.groupId)] = marks[str(k.groupId)] || []).push({ ext: str(k.ext), name: str(k.name) }); });
+      return { groups: groups, byG: byG, marks: marks, shopMap: shopMap };
+    }
+    function full(g, D, t, withRows) {
+      var rows = D.byG[g.id] || [];
+      var r = JSON.parse(JSON.stringify(g));
+      r.state = stateOf(g, t); r.total = totals(rows); r.people = peopleOf(rows); r.marks = D.marks[g.id] || [];
+      r.success = g.mode === 'link' ? null : (r.total.amount > 0 && r.total.amount >= g.min);
+      if (withRows) r.rows = rows;
       return r;
     }
-    function myOrders(date, ext) {
-      ext = str(ext); if (!ext) return [];
-      return ordersOf(date || tp(now()).date).filter(function (o) { return o.ext === ext; });
+    function getGroup(id) { var D = loadAll(); var g = D.groups.filter(function (x) { return x.id === id; })[0]; if (!g) err('找不到這個揪團'); return { g: g, D: D }; }
+    function voteTarget(t, D) {
+      var todayBento = D.groups.some(function (g) { return g.kind === 'bento' && !g.cancelled && g.endAt.slice(0, 10) === t.date; });
+      var weekend = t.dow === 0 || t.dow === 6;
+      return (!todayBento && !weekend && t.hm < '11:00') ? t.date : nextWorkday(t.date);
     }
-    function saveOrder(o) {
-      var date = str(o.date) || tp(now()).date, day = getDay(date);
-      if (!day) err('今天還沒開團喔');
-      var kind = o.kind === 'drink' ? 'drink' : 'bento';
-      if (kind === 'drink' && !day.hasDrink) err('今天沒有開飲料團');
-      if (closed(day, kind)) err('已經結單，無法再送出或修改');
-      var ext = str(o.ext), item = str(o.item), qty = Math.round(num(o.qty)), price = Math.round(num(o.price));
+    function voteTally(target, ext) {
+      var tally = {}, mine = '';
+      VOTE_CHOICES.forEach(function (c) { tally[c] = 0; });
+      store.all('votes').forEach(function (v) { if (str(v.target) === target) { tally[str(v.choice)] = (tally[str(v.choice)] || 0) + 1; if (ext && str(v.ext) === str(ext)) mine = str(v.choice); } });
+      return { target: target, choices: VOTE_CHOICES, tally: tally, mine: mine };
+    }
+    function recap(D, t) {
+      var ended = D.groups.filter(function (g) { return g.kind === 'bento' && !g.cancelled && g.mode !== 'link' && stateOf(g, t) === 'ended' && g.endAt >= addDays(t.date, -7); })
+        .sort(function (a, b) { return a.endAt < b.endAt ? 1 : -1; });
+      var month = 0;
+      D.groups.forEach(function (g) {
+        if (g.kind !== 'bento' || g.cancelled || g.mode === 'link' || g.endAt.slice(0, 7) !== t.date.slice(0, 7) || t.dt < g.endAt) return;
+        var tt = totals(D.byG[g.id] || []); if (tt.amount > 0 && tt.amount >= g.min) month++;
+      });
+      if (!ended.length) return { last: null, monthSuccess: month };
+      var g = ended[0], rows = D.byG[g.id] || [], tt = totals(rows), cnt = {};
+      rows.forEach(function (o) { cnt[o.item] = (cnt[o.item] || 0) + o.qty; });
+      var top = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; })[0] || '';
+      return { last: { title: g.title, date: g.endAt.slice(0, 10), amount: tt.amount, people: tt.people, qty: tt.qty, top: top, topQty: top ? cnt[top] : 0,
+        success: tt.amount > 0 && tt.amount >= g.min }, monthSuccess: month };
+    }
+    function home(p) {
+      var t = tp(now()), D = loadAll(), soon = addDays(t.dt, 7);
+      var list = D.groups.filter(function (g) {
+        var s = stateOf(g, t);
+        return s === 'open' || s === 'closed' || (s === 'upcoming' && g.startAt <= soon);
+      }).sort(function (a, b) { return (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || (a.endAt < b.endAt ? -1 : 1); })
+        .map(function (g) { return full(g, D, t); });
+      return { now: t, groups: list, recap: recap(D, t), vote: voteTally(voteTarget(t, D), p && p.ext) };
+    }
+    function groupDetail(id) { var x = getGroup(id); return full(x.g, x.D, tp(now())); }
+
+    // ---------- 同事操作 ----------
+    function saveCart(p) {
+      var x = getGroup(str(p.groupId)), g = x.g, t = tp(now()), st = stateOf(g, t);
+      if (g.mode === 'link') err('這個揪團請用線上點餐連結');
+      if (st === 'upcoming') err('還沒開始，' + g.startAt.replace('T', ' ') + ' 開放點餐');
+      if (st !== 'open') err('已經結單，無法再送出或修改');
+      var ext = str(p.ext); if (!ext) err('請輸入分機號碼');
+      var items = (p.items || []).map(function (i) {
+        return { item: str(i.item), qty: Math.round(num(i.qty)), price: Math.round(num(i.price)), sugar: str(i.sugar), ice: str(i.ice), note: str(i.note) };
+      }).filter(function (i) { return i.item; });
+      if (!items.length && !p.replace) err('請至少點一樣');
+      items.forEach(function (i) { if (i.qty < 1) err(i.item + ' 的數量至少 1'); if (i.price < 0) err(i.item + ' 的金額不能是負數'); });
+      var mine = (x.D.byG[g.id] || []).filter(function (o) { return o.ext === ext; });
+      if (p.replace) mine.forEach(function (o) { if (!o.paid) store.remove('orders', 'id', o.id); });
+      var ts = t.iso;
+      items.forEach(function (i, n) {
+        store.insert('orders', { id: uid('o') + n, groupId: g.id, ext: ext, name: str(p.name), item: i.item, qty: i.qty, price: i.price, amount: i.qty * i.price,
+          sugar: i.sugar, ice: i.ice, note: i.note, paid: '', picked: '', createdAt: ts, updatedAt: ts });
+      });
+      return groupDetail(g.id);
+    }
+    function deleteMine(p) {
+      var x = getGroup(str(p.groupId)), g = x.g, ext = str(p.ext);
+      if (stateOf(g, tp(now())) !== 'open') err('已經結單，無法刪除');
+      var mine = (x.D.byG[g.id] || []).filter(function (o) { return o.ext === ext; });
+      if (!mine.length) err('分機 ' + ext + ' 沒有點餐');
+      if (mine.every(function (o) { return o.paid; })) err('已付款，請找管理員處理');
+      mine.forEach(function (o) { if (!o.paid) store.remove('orders', 'id', o.id); });
+      return groupDetail(g.id);
+    }
+    function mark(p) {
+      var x = getGroup(str(p.groupId)), g = x.g, ext = str(p.ext);
       if (!ext) err('請輸入分機號碼');
-      if (!item) err('請輸入品項');
-      if (qty < 1) err('數量至少 1');
-      if (price < 0) err('金額不能是負數');
-      var t = tp(now()).iso, rec = { date: date, ext: ext, name: str(o.name), kind: kind, item: item, qty: qty, price: price,
-        amount: qty * price, sugar: kind === 'drink' ? str(o.sugar) : '', ice: kind === 'drink' ? str(o.ice) : '', note: str(o.note), updatedAt: t };
-      if (o.id) {
-        var old = store.all('orders').map(orderOut).filter(function (x) { return x.id === o.id; })[0];
-        if (!old) err('找不到這筆點餐');
-        if (old.ext !== ext) err('分機不符，無法修改別人的點餐');
-        if (old.paid) err('這筆已付款，請找櫃檯修改');
-        store.update('orders', 'id', o.id, rec);
-        rec.id = o.id;
-      } else {
-        rec.id = uid('o'); rec.paid = ''; rec.picked = ''; rec.createdAt = t;
-        store.insert('orders', rec);
-      }
-      return { order: orderOut(rec), mine: myOrders(date, ext), summary: summary(date) };
+      var st = stateOf(g, tp(now())); if (st === 'upcoming' || st === 'ended') err('現在不能標記');
+      var had = (x.D.marks[g.id] || []).some(function (m) { return m.ext === ext; });
+      if (had && !p.on) {
+        store.removeWhere('marks', function (r) { return str(r.groupId) === g.id && str(r.ext) === ext; });
+      } else if (!had && p.on !== false) store.insert('marks', { groupId: g.id, ext: ext, name: str(p.name), createdAt: tp(now()).iso });
+      return groupDetail(g.id);
     }
-    function deleteOrder(id, ext) {
-      var old = store.all('orders').map(orderOut).filter(function (x) { return x.id === id; })[0];
-      if (!old) err('找不到這筆點餐');
-      if (old.ext !== str(ext)) err('分機不符');
-      if (old.paid) err('這筆已付款，請找櫃檯處理');
-      var day = getDay(old.date);
-      if (day && closed(day, old.kind)) err('已經結單，無法刪除');
-      store.remove('orders', 'id', id);
-      return { mine: myOrders(old.date, ext), summary: summary(old.date) };
+    function vote(p) {
+      var ext = str(p.ext), c = str(p.choice), target = str(p.target);
+      if (!ext) err('請先輸入分機'); if (VOTE_CHOICES.indexOf(c) < 0) err('選項錯誤');
+      store.removeWhere('votes', function (r) { return str(r.target) === target && str(r.ext) === ext; });
+      store.insert('votes', { target: target, ext: ext, choice: c, createdAt: tp(now()).iso });
+      return voteTally(target, ext);
     }
 
-    // ---------- 後台 ----------
-    function adminDay(date) {
-      date = date || tp(now()).date;
-      return { summary: summary(date), orders: ordersOf(date) };
+    // ---------- 管理員 ----------
+    function adminGroups() {
+      var t = tp(now()), D = loadAll(), from = addDays(t.date, -45);
+      var list = D.groups.filter(function (g) { return !g.cancelled && g.endAt >= from; })
+        .sort(function (a, b) { return a.endAt < b.endAt ? 1 : -1; }).map(function (g) { return full(g, D, t); });
+      return { now: t, groups: list, vote: voteTally(voteTarget(t, D)), voteToday: voteTally(t.date) };
     }
-    function saveDay(d) {
-      var date = str(d.date); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) err('日期格式錯誤');
-      if (!str(d.bentoShopName)) err('請選擇或輸入便當店');
-      if (!/^\d{2}:\d{2}$/.test(str(d.bentoDeadline))) err('請設定便當結單時間');
-      var has = bool(d.hasDrink);
-      if (has && !str(d.drinkShopName)) err('請選擇或輸入飲料店');
-      if (has && !/^\d{2}:\d{2}$/.test(str(d.drinkDeadline))) err('請設定飲料結單時間');
-      var rec = { date: date, bentoShopId: str(d.bentoShopId), bentoShopName: str(d.bentoShopName), bentoMin: Math.round(num(d.bentoMin)),
-        bentoDeadline: str(d.bentoDeadline), hasDrink: has ? '1' : '', drinkShopId: has ? str(d.drinkShopId) : '',
-        drinkShopName: has ? str(d.drinkShopName) : '', drinkMin: has ? Math.round(num(d.drinkMin)) : '', drinkDeadline: has ? str(d.drinkDeadline) : '',
-        message: str(d.message), updatedAt: tp(now()).iso };
-      if (getDay(date)) store.update('days', 'date', date, rec); else store.insert('days', rec);
-      return summary(date);
+    function saveGroup(d) {
+      var t = tp(now()), kind = ['bento', 'drink', 'other'].indexOf(d.kind) >= 0 ? d.kind : 'bento', mode = d.mode === 'link' ? 'link' : 'here';
+      var title = str(d.title); if (!title) err(kind === 'other' ? '請輸入揪團名稱' : '請選擇或輸入店名');
+      if (mode === 'link' && !/^https?:\/\//.test(str(d.link))) err('請貼上完整的線上點餐網址（https:// 開頭）');
+      var startAt, endAt, closeAt;
+      if (kind === 'other') {
+        startAt = str(d.startAt); endAt = str(d.endAt);
+        if (!okDT(startAt) || !okDT(endAt)) err('請設定開始和結束時間');
+        if (endAt <= startAt) err('結束時間要晚於開始時間');
+        closeAt = addDays(endAt, 3);
+      } else {
+        var date = str(d.date), dl = str(d.deadline), ct = str(d.closeTime) || '14:00';
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) err('日期格式錯誤');
+        if (!/^\d{2}:\d{2}$/.test(dl)) err('請設定結單時間');
+        startAt = date + 'T00:00'; endAt = date + 'T' + dl; closeAt = date + 'T' + (ct > dl ? ct : dl);
+        if (closeAt === endAt) closeAt = addDays(endAt, 0).slice(0, 11) + '23:59';
+      }
+      var rec = { kind: kind, title: title, shopId: str(d.shopId), mode: mode, link: mode === 'link' ? str(d.link) : '', min: mode === 'link' ? '' : Math.round(num(d.min)),
+        startAt: startAt, endAt: endAt, closeAt: closeAt, desc: str(d.desc), emoji: str(d.emoji), images: JSON.stringify(d.images || []), message: str(d.message),
+        cancelled: '', updatedAt: t.iso };
+      var exists = d.id && store.all('groups').some(function (g) { return str(g.id) === d.id; });
+      if (exists) { store.update('groups', 'id', d.id, rec); rec.id = d.id; }
+      else { rec.id = uid('g'); rec.createdAt = t.iso; store.insert('groups', rec); }
+      return groupDetail(rec.id);
     }
-    function deleteDay(date) { store.remove('days', 'date', date); return { ok: true }; }
+    function cancelGroup(id) { store.update('groups', 'id', id, { cancelled: '1', updatedAt: tp(now()).iso }); return { ok: true }; }
+    function adminGroup(id) { var x = getGroup(id); return full(x.g, x.D, tp(now()), true); }
+    function setExt(p, field) {
+      var x = getGroup(str(p.groupId)), ext = str(p.ext), ts = tp(now()).iso, patch = {};
+      patch[field] = p.value ? '1' : ''; patch.updatedAt = ts;
+      (x.D.byG[x.g.id] || []).forEach(function (o) { if (o.ext === ext) store.update('orders', 'id', o.id, patch); });
+      return adminGroup(x.g.id);
+    }
+    function adminSaveOrder(o) {
+      var gid = str(o.groupId); getGroup(gid);
+      var qty = Math.round(num(o.qty)), price = Math.round(num(o.price)), ts = tp(now()).iso;
+      var rec = { groupId: gid, ext: str(o.ext), name: str(o.name), item: str(o.item), qty: qty, price: price, amount: qty * price,
+        sugar: str(o.sugar), ice: str(o.ice), note: str(o.note), updatedAt: ts };
+      if (!rec.ext || !rec.item || qty < 1) err('分機、品項、數量都要填');
+      if (o.id) store.update('orders', 'id', o.id, rec);
+      else { rec.id = uid('o'); rec.paid = ''; rec.picked = ''; rec.createdAt = ts; store.insert('orders', rec); }
+      return adminGroup(gid);
+    }
+    function adminDeleteOrder(p) { store.remove('orders', 'id', str(p.id)); return adminGroup(str(p.groupId)); }
     function saveShop(s) {
       if (!str(s.name)) err('請輸入店名');
       var rec = { name: str(s.name), type: s.type === 'drink' ? 'drink' : 'bento', category: str(s.category), phone: str(s.phone),
         minOrder: str(s.minOrder), note: str(s.note), images: JSON.stringify(s.images || []), active: s.active === false ? '0' : '1' };
-      if (s.id && shopById(s.id)) { store.update('shops', 'id', s.id, rec); rec.id = s.id; }
+      if (s.id && store.all('shops').some(function (x) { return str(x.id) === s.id; })) { store.update('shops', 'id', s.id, rec); rec.id = s.id; }
       else { rec.id = uid('s'); rec.createdAt = tp(now()).iso; store.insert('shops', rec); }
       return shopOut(rec);
     }
-    function setFlag(id, field, val) {
-      if (field !== 'paid' && field !== 'picked') err('欄位錯誤');
-      var p = {}; p[field] = val ? '1' : ''; p.updatedAt = tp(now()).iso;
-      store.update('orders', 'id', id, p);
-      return { ok: true };
-    }
-    function adminSaveOrder(o) { // 櫃檯代為修改，不受結單限制
-      var old = o.id ? store.all('orders').map(orderOut).filter(function (x) { return x.id === o.id; })[0] : null;
-      var qty = Math.round(num(o.qty)), price = Math.round(num(o.price));
-      var rec = { date: str(o.date) || (old && old.date) || tp(now()).date, ext: str(o.ext), name: str(o.name), kind: o.kind === 'drink' ? 'drink' : 'bento',
-        item: str(o.item), qty: qty, price: price, amount: qty * price, sugar: str(o.sugar), ice: str(o.ice), note: str(o.note), updatedAt: tp(now()).iso };
-      if (!rec.ext || !rec.item || qty < 1) err('分機、品項、數量都要填');
-      if (old) store.update('orders', 'id', o.id, rec);
-      else { rec.id = uid('o'); rec.paid = ''; rec.picked = ''; rec.createdAt = rec.updatedAt; store.insert('orders', rec); }
-      return { ok: true };
-    }
-    function adminDeleteOrder(id) { store.remove('orders', 'id', id); return { ok: true }; }
     function stats(from, to) {
-      var t = tp(now()), all = store.all('orders').map(orderOut), agg = { bento: {}, drink: {} }, items = {}, dayCount = 0;
-      store.all('days').map(dayOut).forEach(function (d) {
-        if ((from && d.date < from) || (to && d.date > to)) return;
-        dayCount++;
-        var list = all.filter(function (o) { return o.date === d.date; });
-        ['bento', 'drink'].forEach(function (k) {
-          if (k === 'drink' && !d.hasDrink) return;
-          if (!closed(d, k)) return;
-          var name = k === 'drink' ? d.drinkShopName : d.bentoShopName, min = k === 'drink' ? d.drinkMin : d.bentoMin, tt = totals(list, k);
-          var a = agg[k][name] || (agg[k][name] = { shop: name, times: 0, success: 0, fail: 0, sum: 0, people: 0 });
-          a.times++; a.sum += tt.amount; a.people += tt.people;
-          if (tt.amount >= (min || 0) && tt.amount > 0) a.success++; else a.fail++;
-          list.forEach(function (o) {
-            if (o.kind !== k) return;
-            var key = k + '|' + name + '|' + o.item, it = items[key] || (items[key] = { kind: k, shop: name, item: o.item, qty: 0 });
-            it.qty += o.qty;
-          });
-        });
+      var t = tp(now()), D = loadAll(), agg = { bento: {}, drink: {}, other: {} }, items = {}, n = 0;
+      D.groups.forEach(function (g) {
+        if (g.cancelled) return;
+        var d = g.endAt.slice(0, 10); if ((from && d < from) || (to && d > to)) return;
+        var st = stateOf(g, t); if (st !== 'closed' && st !== 'ended') return;
+        n++;
+        var rows = D.byG[g.id] || [], tt = totals(rows), k = g.kind;
+        var a = agg[k][g.title] || (agg[k][g.title] = { shop: g.title, times: 0, success: 0, fail: 0, link: 0, sum: 0, people: 0 });
+        a.times++;
+        if (g.mode === 'link') { a.link++; a.people += (D.marks[g.id] || []).length; }
+        else { a.sum += tt.amount; a.people += tt.people; if (tt.amount > 0 && tt.amount >= g.min) a.success++; else a.fail++; }
+        rows.forEach(function (o) { var key = k + '|' + g.title + '|' + o.item, it = items[key] || (items[key] = { kind: k, shop: g.title, item: o.item, qty: 0 }); it.qty += o.qty; });
       });
       function fin(m) {
         return Object.keys(m).map(function (k) {
-          var a = m[k];
-          return { shop: a.shop, times: a.times, success: a.success, fail: a.fail, failRate: a.times ? Math.round(a.fail / a.times * 100) : 0,
-            avgTotal: a.times ? Math.round(a.sum / a.times) : 0, avgPeople: a.times ? Math.round(a.people / a.times * 10) / 10 : 0, total: a.sum };
+          var a = m[k], h = a.times - a.link;
+          return { shop: a.shop, times: a.times, success: a.success, fail: a.fail, link: a.link, failRate: h ? Math.round(a.fail / h * 100) : 0,
+            avgTotal: h ? Math.round(a.sum / h) : 0, avgPeople: a.times ? Math.round(a.people / a.times * 10) / 10 : 0, total: a.sum };
         }).sort(function (x, y) { return y.times - x.times; });
       }
-      var top = Object.keys(items).map(function (k) { return items[k]; }).sort(function (a, b) { return b.qty - a.qty; });
-      return { today: t.date, days: dayCount, bento: fin(agg.bento), drink: fin(agg.drink), topItems: top.slice(0, 30) };
+      return { today: t.date, groups: n, bento: fin(agg.bento), drink: fin(agg.drink), other: fin(agg.other),
+        topItems: Object.keys(items).map(function (k) { return items[k]; }).sort(function (a, b) { return b.qty - a.qty; }).slice(0, 20) };
     }
 
     var publicApi = {
-      summary: function (p) { return summary(p.date); },
-      myOrders: function (p) { return myOrders(p.date, p.ext); },
-      saveOrder: function (p) { return saveOrder(p.order || {}); },
-      deleteOrder: function (p) { return deleteOrder(p.id, p.ext); }
+      home: home,
+      group: function (p) { return groupDetail(str(p.id)); },
+      saveCart: saveCart, deleteMine: deleteMine, mark: mark, vote: vote,
+      shopsPublic: function () { return shops().filter(function (s) { return s.active; }); }
     };
     var adminApi = {
       login: function () { return { ok: true }; },
-      adminDay: function (p) { return adminDay(p.date); },
-      saveDay: function (p) { return saveDay(p.day || {}); },
-      deleteDay: function (p) { return deleteDay(p.date); },
+      adminGroups: adminGroups,
+      adminGroup: function (p) { return adminGroup(str(p.id)); },
+      saveGroup: function (p) { return saveGroup(p.group || {}); },
+      cancelGroup: function (p) { return cancelGroup(str(p.id)); },
+      setPaid: function (p) { return setExt(p, 'paid'); },
+      setPicked: function (p) { return setExt(p, 'picked'); },
+      adminSaveOrder: function (p) { return adminSaveOrder(p.order || {}); },
+      adminDeleteOrder: adminDeleteOrder,
       shops: function () { return shops(); },
       saveShop: function (p) { return saveShop(p.shop || {}); },
-      setFlag: function (p) { return setFlag(p.id, p.field, p.value); },
-      adminSaveOrder: function (p) { return adminSaveOrder(p.order || {}); },
-      adminDeleteOrder: function (p) { return adminDeleteOrder(p.id); },
       stats: function (p) { return stats(p.from, p.to); }
     };
     function handle(p) {
@@ -212,13 +289,12 @@ var LunchCore = (function () {
           if (!opt.checkPassword || !opt.checkPassword(p.pw)) err('密碼錯誤');
           return { ok: true, data: adminApi[a] ? adminApi[a](p) : opt.extraAdmin[a](p) };
         }
-        if (a === 'shopsPublic') return { ok: true, data: shops().filter(function (s) { return s.active; }) };
         err('未知的動作');
       } catch (e) { return { ok: false, error: e.message || String(e) }; }
     }
     return { handle: handle, tp: function () { return tp(now()); } };
   }
-  return { create: create, HEAD: HEAD, tp: tp };
+  return { create: create, HEAD: HEAD, tp: tp, addDays: addDays, nextWorkday: nextWorkday, VOTE_CHOICES: VOTE_CHOICES };
 })();
 if (typeof module !== 'undefined') module.exports = LunchCore;
 
@@ -247,16 +323,19 @@ var LUNCH_SEED_SHOPS = [
  * 使用方式請看「安裝教學」。
  * 唯一需要改的地方：下面的後台密碼。
  ****************************************************/
-var ADMIN_PASSWORD = 'lunch1234';   // ← 改成你們自己的後台密碼
+var ADMIN_PASSWORD = 'lunch1234';   // ← 第一次使用時改成你們的密碼；執行過 setup 後會記住，之後更新程式不用再改
+var BACKEND_VERSION = '2.0';
 
-var SHEET_NAMES = { shops: '店家', days: '每日開團', orders: '點餐紀錄' };
+var SHEET_NAMES = { shops: '店家', groups: '揪團', orders: '點餐紀錄', marks: '線上點好', votes: '明天想吃' };
 var LABELS = {
   shops: ['店家ID', '店名', '類型(bento/drink)', '分類', '電話', '預設低消', '備註', 'DM圖片', '啟用', '建立時間'],
-  days: ['日期', '便當店ID', '便當店名', '便當低消', '便當結單', '有飲料', '飲料店ID', '飲料店名', '飲料低消', '飲料結單', '附加訊息', '更新時間'],
-  orders: ['訂單ID', '日期', '分機', '姓名', '類型', '品項', '數量', '單價', '金額', '甜度', '冰塊', '備註', '已付款', '已領取', '建立時間', '更新時間']
+  groups: ['揪團ID', '類型', '名稱', '店家ID', '方式(here/link)', '線上點餐網址', '低消', '開始', '結單', '收攤', '說明', '圖示', '圖片', '附加訊息', '已取消', '建立時間', '更新時間'],
+  orders: ['訂單ID', '揪團ID', '分機', '姓名', '品項', '數量', '單價', '金額', '甜度', '冰塊', '備註', '已付款', '已領取', '建立時間', '更新時間'],
+  marks: ['揪團ID', '分機', '姓名', '時間'],
+  votes: ['日期', '分機', '想吃', '時間']
 };
 
-var _cache = {};
+var _cache = {}, _checked = {};
 function _ss() {
   var a = SpreadsheetApp.getActiveSpreadsheet(); if (a) return a;
   var p = PropertiesService.getScriptProperties(), id = p.getProperty('SS_ID');
@@ -271,6 +350,15 @@ function _sheet(t) {
     sh.getRange(1, 1, sh.getMaxRows(), cols).setNumberFormat('@');
     sh.getRange(1, 1, 1, cols).setValues([LABELS[t]]).setFontWeight('bold').setBackground('#FAEEDA');
     sh.setFrozenRows(1);
+  } else if (!_checked[t]) {
+    _checked[t] = 1;
+    var cols2 = LunchCore.HEAD[t].length, head = sh.getRange(1, 1, 1, cols2).getDisplayValues()[0];
+    if (head.join('|') !== LABELS[t].join('|')) {
+      if (sh.getLastRow() > 1) { sh.setName(SHEET_NAMES[t] + '_舊版_' + Date.now()); return _sheet(t); }
+      sh.getRange(1, 1, sh.getMaxRows(), Math.max(cols2, sh.getMaxColumns())).clearContent();
+      sh.getRange(1, 1, sh.getMaxRows(), cols2).setNumberFormat('@');
+      sh.getRange(1, 1, 1, cols2).setValues([LABELS[t]]).setFontWeight('bold').setBackground('#FAEEDA');
+    }
   }
   return sh;
 }
@@ -304,8 +392,9 @@ var SheetStore = {
     _sheet(t).getRange(row._row, 1, 1, LunchCore.HEAD[t].length).setValues([_toRow(t, merged)]);
     delete _cache[t];
   },
-  remove: function (t, key, val) {
-    var rows = _all(t).filter(function (o) { return String(o[key]) === String(val); });
+  remove: function (t, key, val) { SheetStore.removeWhere(t, function (o) { return String(o[key]) === String(val); }); },
+  removeWhere: function (t, fn) {
+    var rows = _all(t).filter(fn);
     var sh = _sheet(t);
     rows.sort(function (a, b) { return b._row - a._row; }).forEach(function (r) { sh.deleteRow(r._row); });
     delete _cache[t];
@@ -321,7 +410,7 @@ function _folder() {
 }
 
 var App = LunchCore.create(SheetStore, {
-  checkPassword: function (pw) { return String(pw || '') === ADMIN_PASSWORD; },
+  checkPassword: function (pw) { var saved = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD'); return String(pw || '') === (saved || ADMIN_PASSWORD); },
   extraAdmin: {
     uploadImage: function (p) {
       var bytes = Utilities.base64Decode(String(p.data || '').replace(/^data:[^,]+,/, ''));
@@ -337,7 +426,7 @@ function _json(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.payload) { try { p = JSON.parse(p.payload); } catch (x) {} }
-  if (!p.action) return _json({ ok: true, data: '午餐訂便當系統後端運作中' });
+  if (!p.action) return _json({ ok: true, data: '午餐訂便當系統後端運作中 v' + BACKEND_VERSION });
   return _json(App.handle(p));
 }
 function doPost(e) {
@@ -350,7 +439,8 @@ function doPost(e) {
 
 /** 第一次使用：在 Apps Script 上方選「setup」後按「執行」 */
 function setup() {
-  ['shops', 'days', 'orders'].forEach(_sheet);
+  if (ADMIN_PASSWORD !== 'lunch1234') PropertiesService.getScriptProperties().setProperty('ADMIN_PASSWORD', ADMIN_PASSWORD);
+  ['shops', 'groups', 'orders', 'marks', 'votes'].forEach(_sheet);
   _folder();
   if (_all('shops').length === 0) {
     LUNCH_SEED_SHOPS.forEach(function (s) {
@@ -360,5 +450,6 @@ function setup() {
   }
   var def = _ss().getSheetByName('工作表1') || _ss().getSheetByName('Sheet1');
   if (def && _ss().getSheets().length > 1 && def.getLastRow() === 0) _ss().deleteSheet(def);
+  var old = _ss().getSheetByName('每日開團'); if (old && old.getLastRow() <= 1) _ss().deleteSheet(old);
   Logger.log('完成！已建立工作表與 ' + _all('shops').length + ' 家店。資料表網址：' + _ss().getUrl());
 }

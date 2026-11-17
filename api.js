@@ -2,76 +2,79 @@
 (function () {
   var cfg = window.LUNCH_CONFIG || {};
   var demo = !cfg.api;
-  var core = null;
+  var core = null, store = null;
 
-  function hmPlus(min) {
-    var t = new Date(Date.now() + 8 * 3600000 + min * 60000).toISOString();
-    return t.slice(11, 16);
-  }
   function demoStore() {
-    var KEY = 'lunchDemoV1', db;
+    var KEY = 'lunchDemoV2', db = null;
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
-    var today = LunchCore.tp().date;
-    if (!db) {
-      db = { shops: [], days: [], orders: [] };
-      (window.LUNCH_SEED_SHOPS || []).forEach(function (s) {
-        db.shops.push({ id: s.id, name: s.name, type: s.type, category: s.category, phone: s.phone, minOrder: s.minOrder, note: s.note,
-          images: JSON.stringify(s.images), active: '1', createdAt: '' });
-      });
-      db.shops.push({ id: 'd01', name: '清心福全（示範）', type: 'drink', category: '手搖飲', phone: '', minOrder: '500', note: '試玩用的飲料店', images: '[]', active: '1' });
-      // 示範用的過去紀錄，讓統計頁有資料
-      var past = [['s01', 1200, [140, 130, 135, 130, 145, 150, 130, 140, 135]], ['s05', 1000, [140, 120, 160, 140]], ['s09', 750, [110, 100, 130, 100, 150, 110, 100]],
-        ['s10', 1000, [120, 130, 140, 150, 110, 130, 120, 140]], ['s14', 500, [130, 80]], ['s01', 1200, [130, 135, 140, 150, 130, 140, 135, 145, 130]], ['s12', 1000, [150, 120, 130]]];
-      past.forEach(function (p, i) {
-        var d = new Date(Date.now() + 8 * 3600000 - (i + 1) * 86400000 * 1.4).toISOString().slice(0, 10);
-        var s = db.shops.filter(function (x) { return x.id === p[0]; })[0];
-        db.days.push({ date: d, bentoShopId: s.id, bentoShopName: s.name, bentoMin: String(p[1]), bentoDeadline: '09:40', hasDrink: '', message: '' });
-        p[2].forEach(function (pr, j) {
-          db.orders.push({ id: 'h' + i + '_' + j, date: d, ext: String(201 + j), name: '', kind: 'bento', item: s.name.slice(0, 2) + (j % 3 === 0 ? '招牌飯' : j % 3 === 1 ? '雞腿飯' : '排骨飯'),
-            qty: '1', price: String(pr), amount: String(pr), sugar: '', ice: '', note: '', paid: '1', picked: '1' });
-        });
-      });
-    }
-    if (!db.days.some(function (d) { return d.date === today; })) {
-      db.days.push({ date: today, bentoShopId: 's01', bentoShopName: '天菜溫泉雞 江南店', bentoMin: '1200', bentoDeadline: hmPlus(40),
-        hasDrink: '1', drinkShopId: 'd01', drinkShopName: '清心福全（示範）', drinkMin: '500', drinkDeadline: hmPlus(90), message: '' });
-      [['226', 'Ann', '奶油蒜香雞', 140], ['236', '筠凌', '天菜溫泉雞', 130], ['225', '小峰', '川味溫泉口水雞', 135], ['235', '小喵', '黯然銷魂雞', 115], ['108', '慧君', '天菜溫泉雞', 130]]
-        .forEach(function (r, i) {
-          db.orders.push({ id: 'demo' + i + today, date: today, ext: r[0], name: r[1], kind: 'bento', item: r[2], qty: '1', price: String(r[3]), amount: String(r[3]),
-            sugar: '', ice: '', note: '', paid: '', picked: '', createdAt: '', updatedAt: '' });
-        });
-      db.orders.push({ id: 'demod' + today, date: today, ext: '226', name: 'Ann', kind: 'drink', item: '四季春青茶', qty: '2', price: '45', amount: '90', sugar: '微糖', ice: '少冰', note: '', paid: '', picked: '' });
-    }
+    var t = LunchCore.tp(), today = t.date;
+    if (!db || db.seedDay !== today) db = seed(t);
     function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
     save();
+    function S(o) { var c = {}; for (var k in o) c[k] = o[k] === undefined || o[k] === null ? '' : String(o[k]); return c; }
     return {
-      all: function (t) { return db[t].slice(); },
-      insert: function (t, o) { var c = {}; for (var k in o) c[k] = String(o[k]); db[t].push(c); save(); },
-      update: function (t, key, val, patch) {
-        db[t].forEach(function (o) { if (String(o[key]) === String(val)) for (var k in patch) o[k] = String(patch[k]); }); save();
-      },
-      remove: function (t, key, val) { db[t] = db[t].filter(function (o) { return String(o[key]) !== String(val); }); save(); },
+      all: function (n) { return db[n].slice(); },
+      insert: function (n, o) { db[n].push(S(o)); save(); },
+      update: function (n, key, val, patch) { db[n].forEach(function (o) { if (String(o[key]) === String(val)) { var p = S(patch); for (var k in p) o[k] = p[k]; } }); save(); },
+      remove: function (n, key, val) { db[n] = db[n].filter(function (o) { return String(o[key]) !== String(val); }); save(); },
+      removeWhere: function (n, fn) { db[n] = db[n].filter(function (o) { return !fn(o); }); save(); },
       reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} }
     };
   }
+  function seed(t) {
+    var A = LunchCore.addDays, db = { seedDay: t.date, shops: [], groups: [], orders: [], marks: [], votes: [] }, n = 0;
+    (window.LUNCH_SEED_SHOPS || []).forEach(function (s) {
+      db.shops.push({ id: s.id, name: s.name, type: s.type, category: s.category, phone: s.phone, minOrder: s.minOrder, note: s.note, images: JSON.stringify(s.images), active: '1', createdAt: '' });
+    });
+    db.shops.push({ id: 'd01', name: '清心福全（示範）', type: 'drink', category: '手搖飲', phone: '', minOrder: '500', note: '試玩用的飲料店', images: '[]', active: '1' });
+    db.shops.push({ id: 'd02', name: '五十嵐（示範）', type: 'drink', category: '手搖飲', phone: '', minOrder: '400', note: '試玩用的飲料店', images: '[]', active: '1' });
+    function g(o) { o.id = o.id || 'g' + (++n); o.createdAt = ''; o.cancelled = ''; db.groups.push(o); return o.id; }
+    function o(gid, ext, name, item, qty, price, x) {
+      x = x || {}; db.orders.push({ id: 'o' + (++n), groupId: gid, ext: ext, name: name, item: item, qty: String(qty), price: String(price), amount: String(qty * price),
+        sugar: x.sugar || '', ice: x.ice || '', note: x.note || '', paid: x.paid ? '1' : '', picked: x.picked ? '1' : '', createdAt: t.iso, updatedAt: '' });
+    }
+    var dl = A(t.dt, 0).slice(0, 11) + plus(t, 40), dl2 = plus(t, 90);
+    var b = g({ kind: 'bento', title: '天菜溫泉雞 江南店', shopId: 's01', mode: 'here', link: '', min: '1200', startAt: t.date + 'T00:00', endAt: dl, closeAt: later(t.date, dl, 180), desc: '', emoji: '', images: '[]', message: '' });
+    [['226', 'Ann', [['奶油蒜香雞', 1, 140], ['燙青菜', 1, 45]]], ['236', '筠凌', [['天菜溫泉雞', 1, 130]]], ['225', '小峰', [['川味溫泉口水雞', 1, 135], ['黑豆干', 1, 20]]],
+     ['235', '小喵', [['黯然銷魂雞', 1, 115]]], ['108', '慧君', [['天菜溫泉雞', 1, 130], ['水波蛋', 1, 25]]], ['112', '阿德', [['滿漢大餐', 1, 250]]]]
+      .forEach(function (p) { p[2].forEach(function (i) { o(b, p[0], p[1], i[0], i[1], i[2], { paid: p[0] === '108' }); }); });
+    var d = g({ kind: 'drink', title: '清心福全（示範）', shopId: 'd01', mode: 'link', link: 'https://example.com/', min: '', startAt: t.date + 'T00:00', endAt: t.date + 'T' + dl2, closeAt: later(t.date, t.date + 'T' + dl2, 120), desc: '', emoji: '', images: '[]', message: '' });
+    ['226', '236', '108', '301', '112'].forEach(function (e) { db.marks.push({ groupId: d, ext: e, name: '', createdAt: t.iso }); });
+    var c = g({ kind: 'other', title: '下午茶雞蛋糕', shopId: '', mode: 'here', link: '', min: '600', startAt: A(t.dt, -1), endAt: A(t.dt, 2), closeAt: A(t.dt, 5), desc: '一份 10 顆，週五下午送到公司', emoji: '🍰', images: '[]', message: '' });
+    [['236', '筠凌', '原味雞蛋糕', 2, 60], ['301', '', '巧克力雞蛋糕', 1, 70], ['225', '小峰', '原味雞蛋糕', 1, 60]].forEach(function (p) { o(c, p[0], p[1], p[2], p[3], p[4]); });
+    g({ kind: 'other', title: '12 月壽星蛋糕', shopId: '', mode: 'here', link: '', min: '', startAt: A(t.date, 3) + 'T09:00', endAt: A(t.date, 6) + 'T12:00', closeAt: A(t.date, 9) + 'T12:00', desc: '一起幫 12 月壽星慶生', emoji: '🎂', images: '[]', message: '' });
+    // 過去的紀錄（統計、回顧用）
+    var past = [['s05', 1000, [140, 120, 160, 140, 140, 120, 160, 140]], ['s09', 750, [110, 100, 130, 100, 150, 110, 100]], ['s10', 1000, [120, 130, 140]],
+      ['s01', 1200, [130, 135, 140, 150, 130, 140, 135, 145, 130]], ['s14', 500, [130, 80]], ['s12', 1000, [150, 120, 130, 150, 120, 130, 140, 150]]];
+    past.forEach(function (p, i) {
+      var day = A(t.date, -(i + 1)); var s = db.shops.filter(function (x) { return x.id === p[0]; })[0];
+      var id = g({ kind: 'bento', title: s.name, shopId: s.id, mode: 'here', link: '', min: String(p[1]), startAt: day + 'T00:00', endAt: day + 'T09:40', closeAt: day + 'T14:00', desc: '', emoji: '', images: '[]', message: '' });
+      p[2].forEach(function (pr, j) { o(id, String(201 + j), '', ['招牌飯', '雞腿飯', '排骨飯'][j % 3], 1, pr, { paid: 1, picked: 1 }); });
+    });
+    [['便當飯類', 4], ['麵食水餃', 2], ['異國料理', 3], ['小吃', 1]].forEach(function (v) { for (var k = 0; k < v[1]; k++) db.votes.push({ target: '', ext: 'v' + v[0] + k, choice: v[0], createdAt: '' }); });
+    return db;
+  }
+  function plus(t, min) { return new Date(Date.parse(t.dt + ':00Z') + min * 60000).toISOString().slice(11, 16); }
+  function later(date, dt, min) { var x = new Date(Date.parse(dt + ':00Z') + min * 60000).toISOString().slice(0, 16); return x.slice(0, 10) > date ? date + 'T23:59' : x; }
 
-  var store = null;
   if (demo) {
     store = demoStore();
+    // 讓示範投票顯示在「明天」
+    var vt = core;
     core = LunchCore.create(store, {
       checkPassword: function (pw) { return pw === '1234'; },
-      extraAdmin: {
-        uploadImage: function (p) { return { url: p.data }; } // 試玩：直接用圖片資料
-      }
+      extraAdmin: { uploadImage: function (p) { return { url: p.data }; } }
     });
+    var h0 = core.handle({ action: 'home' });
+    if (h0.ok) store.all('votes').forEach(function (v) { if (!v.target) store.update('votes', 'ext', v.ext, { target: h0.data.vote.target }); });
   }
 
-  var GET_ACTIONS = { summary: 1, myOrders: 1, shopsPublic: 1 };
+  var GET_ACTIONS = { home: 1, group: 1, shopsPublic: 1 };
   function call(action, params) {
     params = params || {}; params.action = action;
     if (demo) {
       return new Promise(function (res, rej) {
-        setTimeout(function () { var r = core.handle(JSON.parse(JSON.stringify(params))); r.ok ? res(r.data) : rej(new Error(r.error)); }, 250);
+        setTimeout(function () { var r = core.handle(JSON.parse(JSON.stringify(params))); r.ok ? res(r.data) : rej(new Error(r.error)); }, 200);
       });
     }
     var req = GET_ACTIONS[action]
@@ -80,14 +83,15 @@
     return req.then(function (r) { return r.json(); }).then(function (r) {
       if (!r.ok) throw new Error(r.error || '發生錯誤');
       return r.data;
-    }, function (e) { if (e && e.message && /[一-鿿]/.test(e.message)) throw e; throw new Error('連線失敗，請檢查網路後再試一次'); });
+    }, function (e) { throw new Error('連線失敗，請檢查網路後再試一次'); });
   }
-  window.ask = function (msg) {
+  window.ask = function (msg, okText) {
     return new Promise(function (res) {
       var d = document.createElement('div');
-      d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px';
-      d.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:340px;width:100%;text-align:center"><div style="font-size:17px;font-weight:700;margin-bottom:16px;color:#2C2C2A"></div><div style="display:flex;gap:10px"><button style="flex:1">取消</button><button style="flex:1;background:#E24B4A;color:#fff;border-color:#E24B4A">確定</button></div></div>';
-      d.querySelector('div div').textContent = msg;
+      d.className = 'askbg';
+      d.innerHTML = '<div class="askbox"><img src="img/tom_head.png" alt="" class="askimg"><div class="askmsg"></div><div class="askbtns"><button class="ghostbtn">取消</button><button class="okbtn"></button></div></div>';
+      d.querySelector('.askmsg').textContent = msg;
+      d.querySelector('.okbtn').textContent = okText || '確定';
       var b = d.querySelectorAll('button');
       b[0].onclick = function () { d.remove(); res(false); };
       b[1].onclick = function () { d.remove(); res(true); };
