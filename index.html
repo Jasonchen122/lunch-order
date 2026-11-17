@@ -80,6 +80,8 @@
 .step button{border:none;border-radius:0;width:38px;height:100%;font-size:20px;padding:0;background:var(--bg)}
 .step b{flex:1;text-align:center;font-size:18px}
 .rm{border:none;background:var(--no1);color:var(--no2);width:36px;height:36px;padding:0;border-radius:10px}
+.proxy{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--sub);background:var(--bg);border-radius:12px;padding:8px 12px;margin-bottom:12px;cursor:pointer}
+.proxy input{width:20px;height:20px;flex:none}.proxy.on{background:var(--info1);color:var(--info4)}
 .addrow{width:100%;border:2px dashed var(--c2);color:var(--c4);background:var(--c1);margin:2px 0 10px}
 .quick{margin-bottom:10px}.quick span.l{font-size:13px;color:var(--sub);font-weight:700;margin-right:4px}
 .total{display:flex;justify-content:space-between;align-items:center;background:var(--c1);color:var(--c4);border-radius:14px;padding:10px 14px;margin-bottom:12px}
@@ -143,6 +145,7 @@ var MAS={bento:{head:'img/tom_head.png',big:'img/tom_full.png',sad:'img/tom_head
  other:{head:'img/tom_head.png',big:'img/tom_wave.png',sad:'img/tom_head_gray.png',name:'TOM'}};
 var QUICK={bento:[['燙青菜',''],['貢丸湯',''],['滷蛋',''],['白飯',''],['加大','']],drink:[],other:[]};
 var SUGAR=['','正常','少糖','半糖','微糖','無糖'],ICE=['','正常冰','少冰','微冰','去冰','溫','熱'];
+var proxy=false, px={ext:'',name:''};
 var H=null, sel=null, offset=0, busy=false, cart=[], cartFor='', editMode=false, viewExt='', lastPct={}, celebrated={}, me={};
 try{me=JSON.parse(localStorage.getItem('lunchMe')||'{}')}catch(e){}
 if(LunchAPI.demo) $('demoBar').classList.remove('hide');
@@ -287,12 +290,14 @@ function drawCart(){
   }).join('');
   var q=QUICK[k].length?'<div class="quick"><span class="l">常加點：</span>'+QUICK[k].map(function(x){return '<span class="chip" data-add="'+x[0]+'">＋'+x[0]+'</span>'}).join('')+'</div>':'';
   box.innerHTML='<div class="pad"><div class="sec-t">'+(editMode?'✏️ 修改我的點餐':'🧺 我要點餐')+'</div>'+
-    '<div class="grid2" style="margin-bottom:12px"><div><label>分機 *</label><input id="ext" inputmode="numeric" placeholder="例如 226" value="'+esc(me.ext||'')+'"'+(editMode?' readonly':'')+'></div><div><label>稱呼（選填）</label><input id="nm" placeholder="例如 Ann" value="'+esc(me.name||'')+'"></div></div>'+
+    (editMode?'':'<label class="proxy'+(proxy?' on':'')+'"><input type="checkbox" id="proxyCb"'+(proxy?' checked':'')+'> 👥 幫同事代點（用同事的分機，錢由同事付）</label>')+
+    '<div class="grid2" style="margin-bottom:12px"><div><label>'+(proxy?'同事的分機 *':'分機 *')+'</label><input id="ext" inputmode="numeric" placeholder="'+(proxy?'同事的分機':'例如 226')+'" value="'+esc(proxy?px.ext:(me.ext||''))+'"'+(editMode?' readonly':'')+'></div><div><label>'+(proxy?'同事的稱呼':'稱呼（選填）')+'</label><input id="nm" placeholder="'+(proxy?'例如 Daniel':'例如 Ann')+'" value="'+esc(proxy?px.name:(me.name||''))+'"></div></div>'+
     '<div id="rows">'+rows+'</div><button class="addrow" id="addRow">＋ 再加一樣</button>'+q+
     '<div class="total"><span style="font-weight:800">共 <span id="cnt">0</span> 樣・合計</span><b id="tot">$0</b></div>'+
     '<button class="send" id="send">送出點餐</button>'+(editMode?'<button class="ghost" id="cancelEdit" style="width:100%;margin-top:6px">取消修改</button>':'')+'</div>';
   calc();
-  $('ext').oninput=function(){me.ext=this.value.trim()};$('nm').oninput=function(){me.name=this.value.trim()};
+  $('ext').oninput=function(){if(proxy)px.ext=this.value.trim();else me.ext=this.value.trim()};$('nm').oninput=function(){if(proxy)px.name=this.value.trim();else me.name=this.value.trim()};
+  if($('proxyCb'))$('proxyCb').onchange=function(){proxy=this.checked;drawCart();if(proxy)$('ext').focus()};
   $('rows').oninput=function(e){var r=e.target.closest('[data-r]');if(!r)return;cart[+r.dataset.r][e.target.dataset.f]=e.target.value;calc()};
   $('rows').onchange=$('rows').oninput;
   $('rows').onclick=function(e){var r=e.target.closest('[data-r]');if(!r)return;var i=+r.dataset.r;
@@ -311,12 +316,13 @@ function submit(){
   var items=cart.filter(function(c){return c.item.trim()});
   if(!items.length&&!editMode) return toast('請至少輸入一樣品項',1);
   for(var i=0;i<items.length;i++){if(items[i].price===''||isNaN(+items[i].price))return toast('請輸入「'+items[i].item+'」的單價',1)}
-  me.ext=ext;me.name=nm;saveMe();
+  if(!proxy){me.ext=ext;me.name=nm;saveMe()}else if(ext===me.ext){return toast('代點要填同事的分機喔',1)}
+  var wasProxy=proxy;
   var b=$('send');b.disabled=true;b.innerHTML='<span class="spin"></span> 送出中';
   var wasOk=g.success;
   LunchAPI.call('saveCart',{groupId:g.id,ext:ext,name:nm,replace:editMode,items:items}).then(function(r){
-    replaceGroup(r);toast(editMode?'已更新你的點餐':(!wasOk&&r.success?'你讓大家成團了！':'點餐成功！謝謝你幫忙湊低消'));
-    editMode=false;cart=[blank()];viewExt=ext;drawCards();drawDash();drawCart();drawPeople();greet();
+    replaceGroup(r);toast(wasProxy?'已幫 '+(nm||'分機 '+ext)+' 代點，錢由他付給管理員':editMode?'已更新你的點餐':(!wasOk&&r.success?'你讓大家成團了！':'點餐成功！謝謝你幫忙湊低消'));
+    proxy=false;px={ext:'',name:''};editMode=false;cart=[blank()];viewExt=ext;drawCards();drawDash();drawCart();drawPeople();greet();
     $('peopleCard').scrollIntoView({behavior:'smooth',block:'start'});
   }).catch(function(e){toast(e.message,1);b.disabled=false;calc()});
 }
@@ -406,11 +412,11 @@ if(LunchAPI.demo){
   var KEY='lunchDemoV2';
   function edit(fn){var db=JSON.parse(localStorage.getItem(KEY));fn(db);localStorage.setItem(KEY,JSON.stringify(db));try{sessionStorage.setItem('tourSel',sel||'')}catch(e){}location.reload()}
   function nowDT(m){return new Date(Date.now()+8*3600e3+(m||0)*6e4).toISOString().slice(0,16)}
-  var tour=document.createElement('div');tour.className='tour';
-  tour.innerHTML='<div class="th"><img src="img/tom_head.png" alt="">🎬 體驗模式<span style="margin-left:auto">▾</span></div><div class="tb"><small>按按看，TOM 會跟著動</small>'+
+  var tour=document.createElement('div');tour.className='tour min';document.body.style.paddingBottom='80px';
+  tour.innerHTML='<div class="th"><img src="img/tom_head.png" alt="">🎬 體驗模式<span style="margin-left:auto;font-size:12px">點我展開</span></div><div class="tb"><small>按按看，TOM 會跟著動</small>'+
     '<button data-t="add">🧑‍🍳 模擬一位同事點餐</button><button data-t="ok">🎉 快轉到結單（成團）</button><button data-t="no">💔 快轉到結單（沒成團）</button><button data-t="end">🌙 快轉到下午收攤</button><button data-t="reset">🔄 重新開始</button></div>';
   document.body.appendChild(tour);
-  tour.querySelector('.th').onclick=function(){tour.classList.toggle('min')};
+  tour.querySelector('.th').onclick=function(){tour.classList.toggle('min');this.lastChild.textContent=tour.classList.contains('min')?'點我展開':'收起 ▾'};
   try{var ts=sessionStorage.getItem('tourSel');if(ts)sel=ts;sessionStorage.removeItem('tourSel')}catch(e){}
   var NAMES=[['301','小明'],['302','阿美'],['303',''],['304','Kevin'],['305','佩佩'],['306',''],['307','大雄'],['308','Linda']],ITEMS={bento:[['蔥油溫泉雞',135],['奶油蒜香雞',140],['七味照燒雞',140],['滿漢大餐',250],['燙青菜',50]],drink:[['四季春',45],['珍珠奶茶',60]],other:[['原味雞蛋糕',60],['巧克力雞蛋糕',70]]};
   var ni=0;
