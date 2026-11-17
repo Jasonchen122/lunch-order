@@ -98,7 +98,9 @@ var LunchCore = (function () {
     function voteTarget(t, D) {
       var todayBento = D.groups.some(function (g) { return g.kind === 'bento' && !g.cancelled && g.endAt.slice(0, 10) === t.date; });
       var weekend = t.dow === 0 || t.dow === 6;
-      return (!todayBento && !weekend && t.hm < '11:00') ? t.date : nextWorkday(t.date);
+      var cand = (!todayBento && !weekend && t.hm < '11:00') ? t.date : nextWorkday(t.date), n = 0;
+      while (n++ < 10 && D.groups.some(function (g) { return g.kind === 'bento' && !g.cancelled && g.endAt.slice(0, 10) === cand; })) cand = nextWorkday(cand);
+      return cand;
     }
     function voteTally(target, ext) {
       var tally = {}, mine = '';
