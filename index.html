@@ -107,6 +107,13 @@
 .foot a{color:var(--mute);font-size:13px;text-decoration:none}
 .foot div{color:var(--mute);font-size:12px;margin-top:4px}
 .bearwm{position:absolute;right:-20px;bottom:-26px;width:120px;opacity:.12;pointer-events:none}
+.tour{position:fixed;right:12px;bottom:12px;z-index:60;background:#fff;border:2px solid var(--b2);border-radius:18px;box-shadow:0 6px 20px rgba(58,42,30,.18);width:250px;overflow:hidden;animation:fadeup .4s both}
+.tour .th{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--b1);font-weight:800;color:var(--b4);cursor:pointer}
+.tour .th img{width:30px}
+.tour .tb{padding:8px;display:grid;gap:6px}
+.tour .tb button{font-size:14px;padding:9px 10px;text-align:left}
+.tour.min .tb{display:none}
+.tour small{display:block;color:var(--sub);font-size:12px;padding:0 4px 4px}
 </style>
 </head>
 <body>
@@ -172,7 +179,8 @@ setInterval(tick,1000);
 
 // ---------- 招呼 ----------
 function greet(){
-  var hr=new Date(nowMs()+8*3600e3).getUTCHours(), hi=hr<11?'早安！':hr<14?'午安！':'下午好！';
+  var hr=new Date(nowMs()+8*3600e3).getUTCHours();try{if(LunchAPI.demo&&sessionStorage.getItem('tourEnd'))hr=15}catch(e){}
+  var hi=hr<11?'早安！':hr<14?'午安！':'下午好！';
   var b=H.groups.filter(function(g){return g.kind==='bento'&&(g.state==='open'||g.state==='closed')})[0];
   var img='img/tom_full.png',cls='',t,s;
   if(b&&b.state==='open'){var l=ms(b.endAt)-nowMs();
@@ -392,6 +400,35 @@ function load(first){
     render(first);
   }).catch(function(e){$('cards').innerHTML='<div class="card pad" style="text-align:center"><img src="img/tom_head_gray.png" width="80" alt=""><p>'+esc(e.message)+'</p><button onclick="location.reload()">重新整理</button></div>'})
   .then(function(){busy=false});
+}
+// ---------- 體驗模式（只在試用版出現）----------
+if(LunchAPI.demo){
+  var KEY='lunchDemoV2';
+  function edit(fn){var db=JSON.parse(localStorage.getItem(KEY));fn(db);localStorage.setItem(KEY,JSON.stringify(db));try{sessionStorage.setItem('tourSel',sel||'')}catch(e){}location.reload()}
+  function nowDT(m){return new Date(Date.now()+8*3600e3+(m||0)*6e4).toISOString().slice(0,16)}
+  var tour=document.createElement('div');tour.className='tour';
+  tour.innerHTML='<div class="th"><img src="img/tom_head.png" alt="">🎬 體驗模式<span style="margin-left:auto">▾</span></div><div class="tb"><small>按按看，TOM 會跟著動</small>'+
+    '<button data-t="add">🧑‍🍳 模擬一位同事點餐</button><button data-t="ok">🎉 快轉到結單（成團）</button><button data-t="no">💔 快轉到結單（沒成團）</button><button data-t="end">🌙 快轉到下午收攤</button><button data-t="reset">🔄 重新開始</button></div>';
+  document.body.appendChild(tour);
+  tour.querySelector('.th').onclick=function(){tour.classList.toggle('min')};
+  try{var ts=sessionStorage.getItem('tourSel');if(ts)sel=ts;sessionStorage.removeItem('tourSel')}catch(e){}
+  var NAMES=[['301','小明'],['302','阿美'],['303',''],['304','Kevin'],['305','佩佩'],['306',''],['307','大雄'],['308','Linda']],ITEMS={bento:[['蔥油溫泉雞',135],['奶油蒜香雞',140],['七味照燒雞',140],['滿漢大餐',250],['燙青菜',50]],drink:[['四季春',45],['珍珠奶茶',60]],other:[['原味雞蛋糕',60],['巧克力雞蛋糕',70]]};
+  var ni=0;
+  tour.querySelector('.tb').onclick=function(e){var b=e.target.closest('[data-t]');if(!b)return;var g=G(),t=b.dataset.t;
+    if(t==='reset'){try{sessionStorage.removeItem('tourEnd')}catch(z){}LunchAPI.resetDemo();try{localStorage.removeItem('lunchMe')}catch(x){}location.reload();return}
+    if(t==='end'){edit(function(db){var d=nowDT(-1);db.groups.forEach(function(x){if(x.endAt.slice(0,10)<=d.slice(0,10)||x.kind!=='other'){x.endAt=x.endAt<d?x.endAt:nowDT(-3);x.closeAt=d}else{x.startAt=nowDT(10*1440)}})});try{sessionStorage.setItem('tourEnd','1')}catch(z){}return}
+    if(!g)return toast('先在上面選一個揪團',1);
+    if(t==='add'){if(g.state!=='open'||g.mode==='link')return toast('這團現在不能點，先選「天菜溫泉雞」或按重新開始',1);
+      var who=NAMES[ni++%NAMES.length],its=ITEMS[g.kind],it=its[Math.floor(Math.random()*its.length)],items=[{item:it[0],qty:1,price:it[1]}];
+      if(g.kind==='bento'&&Math.random()<.4)items.push({item:'燙青菜',qty:1,price:50});
+      var was=g.success;LunchAPI.call('saveCart',{groupId:g.id,ext:who[0],name:who[1],items:items}).then(function(r){replaceGroup(r);drawCards();drawDash();drawPeople();greet();
+        toast((who[1]||'分機 '+who[0])+' 點了'+items.map(function(i){return i.item}).join('、')+(!was&&r.success?'，成團了！':''))});return}
+    if(g.mode==='link')return toast('線上點餐的團沒有低消，選便當或雞蛋糕試試',1);
+    edit(function(db){var x=db.groups.filter(function(y){return y.id===g.id})[0];x.startAt=nowDT(-600);x.endAt=nowDT(-1);x.closeAt=nowDT(180);
+      var tot=0;db.orders.forEach(function(o){if(o.groupId===x.id)tot+=+o.amount});
+      if(t==='ok'&&tot<+x.min)x.min=String(Math.max(100,Math.floor(tot/100)*100));
+      if(t==='no')x.min=String(tot+300)});
+  };
 }
 load(true);
 setInterval(function(){
