@@ -488,7 +488,7 @@ function drawAfter(){
     var v=H.vote, tot=0; v.choices.forEach(function(c){tot+=v.tally[c]||0});
     var d=new Date(v.target+'T00:00:00Z'), lab=(v.target===H.now.date?'今天':(d.getUTCMonth()+1)+'/'+d.getUTCDate()+'（'+WEEK[d.getUTCDay()]+'）');
     h+='<div class="card pad fadeup"><div class="sec-t" style="margin-bottom:2px">🥣 敲碗！'+lab+'想吃什麼？</div><div class="muted" style="font-size:13px;margin-bottom:10px">投一票給管理員參考</div>'+(function(){var nb=H.groups.filter(function(g){return g.kind==='bento'&&!isActive(g)})[0];return nb?'<div class="muted" style="font-size:13px;margin:-6px 0 10px">'+dayLabel(nb.endAt)+'已經決定吃'+esc(nb.title)+'，先幫'+lab+'敲碗吧！</div>':''})()+'<div class="vote" id="vote">'+
-      v.choices.map(function(c){var n=v.tally[c]||0;return '<div data-v="'+c+'" class="'+(v.mine===c?'me':'')+'">'+(v.mine||tot?'<i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i>':'')+'<span>'+(v.mine===c?'✓ ':'')+c+(v.mine?'　'+n+' 票':'')+'</span></div>'}).join('')+'</div></div>';
+      v.choices.map(function(c){var n=v.tally[c]||0;return '<div data-v="'+c+'" class="'+(v.mine===c?'me':'')+'">'+(v.mine?'<i style="width:'+(tot?Math.round(n/tot*100):0)+'%"></i>':'')+'<span>'+(v.mine===c?'✓ ':'')+c+(v.mine?'　'+n+' 票':'')+'</span></div>'}).join('')+'</div></div>';
   }
   $('after').innerHTML=h;
   if($('vote')) $('vote').onclick=function(e){var d=e.target.closest('[data-v]');if(!d)return;
