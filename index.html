@@ -193,6 +193,11 @@
 .rk .bar{height:6px;border-radius:3px;background:#F1E6D2;margin-top:3px;overflow:hidden}.rk .bar i{display:block;height:100%;background:#EF9F27}
 .hint{font-size:12px;color:var(--sub);text-align:center;margin:6px 0}
 .addb{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:7px 10px;font-weight:800;white-space:nowrap}
+.qrbtn{width:100%;margin-top:10px;background:linear-gradient(180deg,#fff,#FFF1DA);border:2px solid #EF9F27;color:#633806;border-radius:14px;padding:10px;font-weight:900;font-size:16px}
+.qrshow{text-align:center}.qrshow .qh b{display:block;font-size:18px}.qrshow .qh span{font-weight:800;color:var(--sub)}
+.qimg{background:#fff;border-radius:16px;padding:10px;margin:10px auto;max-width:280px;border:2px solid #EF9F27}.qimg svg{display:block;width:100%;height:auto}
+.qcode{font:900 34px ui-monospace,Menlo,monospace;letter-spacing:10px;color:#3A2A1E}
+.qitems{font-size:14px;margin-top:6px}.qpay{display:inline-block;margin-top:8px;background:#FDEBE4;color:#A33A1B;font-weight:900;border-radius:999px;padding:3px 14px}.qpay.ok{background:#E3F6EC;color:#16704F}
 .askin{width:100%;font-size:22px;text-align:center;letter-spacing:4px}.cpop b{display:block;font-size:22px;color:#BA7517}.cpop span{font-size:13px;color:var(--sub)}
 @keyframes cpop{0%{opacity:0;transform:translate(-50%,-40%) scale(.7)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%)}}
 .csheet-bg{position:fixed;inset:0;background:rgba(30,22,15,.45);z-index:80;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -438,6 +443,16 @@ function favHtml(g){
 // ---------- 大家最愛／我上次吃什麼 ----------
 function openHS(h){$('hs').innerHTML=h;$('hs').classList.add('open');$('hsBg').classList.add('open');document.body.style.overflow='hidden'}
 document.getElementById('hsBg').onclick=function(){closeHS()};
+if(/[?&]pk=/.test(location.search))setTimeout(function(){toast('這是取餐 QR，請讓管理員用後台的「📷 取餐核銷」掃描',1)},1500);
+document.addEventListener('click',function(e){var b=e.target.closest('[data-qr]');if(!b)return;e.stopPropagation();showQR(b.dataset.qr)},true);
+var QRLIB=null;function needQR(){return QRLIB||(QRLIB=new Promise(function(ok,no){var sc=document.createElement('script');sc.src='lib/qrcode.js';sc.onload=ok;sc.onerror=function(){QRLIB=null;no(new Error('QR 載入失敗，請再按一次'))};document.head.appendChild(sc)}))}
+function showQR(ext){var g=G();if(!g)return;var p=g.people.filter(function(x){return x.ext===ext})[0];if(!p)return;
+  needQR().then(function(){var code=LunchCore.pickCode(g.id,ext),url=location.origin+location.pathname+'?pk='+g.id+'.'+ext+'.'+code;
+    var q=qrcode(0,'M');q.addData(url);q.make();
+    openHS('<div class="qrshow"><div class="qh"><b>🍱 '+esc(g.title)+'・取餐 QR</b><span>'+esc(ext)+(p.name?' '+esc(p.name):'')+'</span></div><div class="qimg">'+q.createSvgTag({cellSize:6,margin:2,scalable:true})+'</div><div class="qcode">'+code+'</div><div class="hint">取餐時把這個畫面給管理員掃<br>掃不到的話，報這 4 碼也可以</div>'+
+      '<div class="qitems">'+p.items.map(function(i){return esc(i.item)+' × '+i.qty}).join('、')+'</div>'+(p.unpaid?'<div class="qpay">💰 記得帶 '+money(p.unpaid)+' 現金</div>':'<div class="qpay ok">✓ 已付款</div>')+
+      '<button class="ghost" style="width:100%;margin-top:8px" id="hsX">收起來</button></div>');$('hsX').onclick=closeHS;$('hs').onclick=null})
+  .catch(function(e){toast(e.message,1)})}
 function closeHS(){$('hs').classList.remove('open');$('hsBg').classList.remove('open');document.body.style.overflow=''}
 function addToCart(list){var g=G();if(!g||g.state!=='open'){toast('現在不能點餐喔',1);return false}
   cart=cart.filter(function(c){return c.item&&c.item.trim()});
@@ -582,7 +597,7 @@ function drawPeople(){
     var hb='<div class="sec-t" style="margin-bottom:2px">📋 取餐看板</div><div class="muted" style="font-size:13px;margin-bottom:10px">綠色＝已領・橘色＝還沒領・💰＝還沒付款</div><div class="board">'+
       ps.map(function(p){return '<div class="tk '+(p.picked?'got':'wait')+' t'+LV(p.ext).trim()+(p.ext===me.ext?' me':'')+(p.ext===viewExt?' sel':'')+'" data-x="'+esc(p.ext)+'"><b>'+esc(p.ext)+(p.paid?'':' <i>💰</i>')+'</b><small>'+(esc(p.name)||'&nbsp;')+'</small><span>'+(p.picked?'✓ 已領':'待領取')+'</span></div>'}).join('')+'</div>'+
       (left.length?'<div class="nudge">⏰ 還有 '+left.length+' 位還沒領：'+left.map(function(p){return esc(p.ext)+(p.name?' '+esc(p.name):'')}).join('、')+'</div>':'<div class="nudge ok">🎉 便當全部領完了，謝謝大家！</div>')+
-      (mp?'<div class="mybar'+(mp.picked?' got':'')+'"><img src="img/tom_head.png" alt=""><span>'+(mp.picked?'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'已經領了，好好享用！':'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'在櫃檯等你'+(mp.paid?'':'，記得帶 '+money(mp.unpaid)))+'</span></div>':'');
+      (mp?'<div class="mybar'+(mp.picked?' got':'')+'"><img src="img/tom_head.png" alt=""><span>'+(mp.picked?'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'已經領了，好好享用！':'你的'+esc(mp.items.map(function(i){return i.item}).join('、'))+'在櫃檯等你'+(mp.paid?'':'，記得帶 '+money(mp.unpaid)))+'</span></div>'+(mp.picked?'':'<button class="qrbtn" data-qr="'+esc(mp.ext)+'">📱 出示我的取餐 QR</button>'):'');
     var pv=g.people.filter(function(x){return x.ext===viewExt})[0];
     if(pv) hb+='<div class="pview"><div style="font-weight:800;margin-bottom:6px">分機 '+esc(pv.ext)+(pv.name?'（'+esc(pv.name)+'）':'')+'</div>'+pv.items.map(function(i){return '<div class="ln"><span>'+esc(i.item)+' × '+i.qty+'</span><span>'+money(i.amount)+'</span></div>'}).join('')+
       '<div class="paybar '+(pv.paid?'paid':'unpaid')+'"><span>'+(pv.paid?'<span class="stamp">已付款</span>謝謝你！':'待付款・請交現金給管理員')+'</span><b>'+money(pv.paid?pv.total:pv.unpaid)+'</b></div></div>';
@@ -598,6 +613,7 @@ function drawPeople(){
     h+='<div class="pview"><div style="font-weight:800;margin-bottom:6px">分機 '+esc(p.ext)+(p.name?'（'+esc(p.name)+'）':'')+'</div>'+
       p.items.map(function(i){var ex=[i.sugar,i.ice,i.note].filter(Boolean).join('・');return '<div class="ln"><span>'+esc(i.item)+' × '+i.qty+(ex?' <small class="muted">'+esc(ex)+'</small>':'')+(i.paid?' <small style="color:var(--ok2)">✓</small>':'')+'</span><span>'+money(i.amount)+'</span></div>'}).join('')+
       '<div class="paybar '+(p.paid?'paid':'unpaid')+'"><span>'+(p.paid?'<span class="stamp">已付款</span>謝謝你！':'待付款・請交現金給管理員'+(p.total!==p.unpaid?'（已付 '+money(p.total-p.unpaid)+'）':''))+'</span><b>'+money(p.paid?p.total:p.unpaid)+'</b></div>'+
+      (g.kind==='bento'&&!p.picked?'<button class="qrbtn" data-qr="'+esc(p.ext)+'">📱 '+(mine?'我的':'這位的')+'取餐 QR'+(mine?'（取餐時給管理員掃）':'（代點的人可以出示）')+'</button>':'')+
       (canEdit?'<div class="row" style="margin-top:10px"><button id="edMine" style="flex:1">✏️ 修改</button><button id="addMine" style="flex:1">＋ 再加一樣</button><button id="delMine" style="color:var(--no2)">刪除</button></div>':'')+
       (mine||g.state!=='open'||!p.unpaid?'':'<button id="claim" style="width:100%;margin-top:10px">🙋 這是我的分機，我要修改</button>')+'</div>';
   }

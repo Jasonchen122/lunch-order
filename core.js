@@ -360,6 +360,33 @@ var LunchCore = (function () {
       (x.D.byG[x.g.id] || []).forEach(function (o) { if (o.ext === ext) store.update('orders', 'id', o.id, patch); });
       return adminGroup(x.g.id);
     }
+    function pickScan(p) {
+      var raw = str(p.code).trim(), m = raw.match(/pk=([^&#\s]+)/), gid, ext, code;
+      var x = getGroup(str(p.groupId)), rows = x.D.byG[x.g.id] || [];
+      if (m || /^[\w-]+\.\d+\.\w{4}$/.test(raw)) {
+        var parts = decodeURIComponent(m ? m[1] : raw).split('.');
+        gid = parts[0]; ext = parts[1]; code = str(parts[2]).toUpperCase();
+        if (pickCode(gid, ext) !== code) err('這不是系統的取餐 QR');
+        if (gid !== x.g.id) {
+          var og = x.D.groups.filter(function (g) { return g.id === gid; })[0];
+          err('這是' + (og ? og.endAt.slice(5, 10).replace('-', '/') + '「' + og.title + '」' : '別團') + '的 QR，不是這一團');
+        }
+      } else {
+        code = raw.toUpperCase().replace(/O/g, 'Q').replace(/I/g, 'J');
+        if (!/^[0-9A-Z]{4}$/.test(code)) err('請掃 QR，或輸入 4 碼取餐碼');
+        var hit = {}; rows.forEach(function (o) { if (pickCode(x.g.id, o.ext) === code) hit[o.ext] = 1; });
+        var ks = Object.keys(hit); if (!ks.length) err('找不到取餐碼 ' + code); ext = ks[0];
+      }
+      var mine = rows.filter(function (o) { return o.ext === ext; });
+      if (!mine.length) err('分機 ' + ext + ' 在這一團沒有點餐');
+      var already = mine.every(function (o) { return o.picked; }), at = '';
+      if (already) at = mine.map(function (o) { return str(o.updatedAt); }).sort().pop().slice(11, 16);
+      else { var ts = tp(now()).iso; at = ts.slice(11, 16); mine.forEach(function (o) { store.update('orders', 'id', o.id, { picked: '1', updatedAt: ts }); }); }
+      return { ext: ext, name: (mine.filter(function (o) { return o.name; })[0] || {}).name || '', already: already, at: at,
+        items: mine.map(function (o) { return { item: o.item, qty: o.qty }; }),
+        unpaid: mine.filter(function (o) { return !o.paid; }).reduce(function (a, o) { return a + o.amount; }, 0),
+        group: adminGroup(x.g.id) };
+    }
     function adminSaveOrder(o) {
       var gid = str(o.groupId); getGroup(gid);
       var qty = Math.round(num(o.qty)), price = Math.round(num(o.price)), ts = tp(now()).iso;
@@ -420,7 +447,7 @@ var LunchCore = (function () {
       saveGroup: function (p) { return saveGroup(p.group || {}); },
       cancelGroup: function (p) { return cancelGroup(str(p.id)); },
       setPaid: function (p) { return setExt(p, 'paid'); },
-      setPicked: function (p) { return setExt(p, 'picked'); },
+      setPicked: function (p) { return setExt(p, 'picked'); }, pickScan: pickScan,
       adminSaveOrder: function (p) { return adminSaveOrder(p.order || {}); },
       adminDeleteOrder: adminDeleteOrder,
       shops: function () { return shops(); },
@@ -441,6 +468,12 @@ var LunchCore = (function () {
     }
     return { handle: handle, tp: function () { return tp(now()); } };
   }
-  return { create: create, HEAD: HEAD, tp: tp, addDays: addDays, nextWorkday: nextWorkday, VOTE_CHOICES: VOTE_CHOICES, LEVELS: LEVELS };
+  function pickCode(gid, ext) {
+    var t = 'TOMJOY|' + gid + '|' + ext, h = 2166136261;
+    for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    h ^= h >>> 15; h = Math.imul(h, 2246822507) >>> 0; h ^= h >>> 13;
+    return ('000' + (h % 1679616).toString(36).toUpperCase()).slice(-4).replace(/O/g, 'Q').replace(/I/g, 'J');
+  }
+  return { create: create, pickCode: pickCode, HEAD: HEAD, tp: tp, addDays: addDays, nextWorkday: nextWorkday, VOTE_CHOICES: VOTE_CHOICES, LEVELS: LEVELS };
 })();
 if (typeof module !== 'undefined') module.exports = LunchCore;

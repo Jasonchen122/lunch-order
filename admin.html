@@ -97,6 +97,21 @@ td.n,th.n{text-align:right}
 .login img{width:110px;animation:pulse 2.4s ease-in-out infinite}
 .sec-t{font-size:18px;font-weight:800;margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .vt{display:flex;gap:6px;flex-wrap:wrap}.vt span{background:#fff;border-radius:999px;padding:4px 10px;font-size:14px;font-weight:700}
+.scanbtn{width:100%;margin:0 0 12px;padding:14px;font-size:18px;font-weight:900;border-radius:16px;background:#1D9E75;border:0;color:#fff}
+.scanx{position:fixed;inset:0;background:#1A1512;z-index:200;overflow-y:auto;padding:12px 14px 30px;color:#fff}
+.sx-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sx-top b{font-size:18px}.sx-top span{flex:1;font-size:13px;color:#CDBFAE;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sx-top button{background:#fff;color:#3A2A1E;border-radius:10px;padding:6px 14px;font-weight:800}
+.sx-cam{position:relative;background:#000;border-radius:18px;overflow:hidden;aspect-ratio:1/1;max-width:420px;margin:0 auto}
+.sx-cam video{width:100%;height:100%;object-fit:cover;display:block}
+.sx-fr{position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1/1;transform:translate(-50%,-50%);border:4px solid #fff;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.sx-fr i{position:absolute;left:8px;right:8px;height:3px;background:#5CFF9D;box-shadow:0 0 12px #5CFF9D;animation:sxl 1.6s ease-in-out infinite alternate}@keyframes sxl{from{top:8px}to{top:calc(100% - 12px)}}
+.sx-tip{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:13px;text-shadow:0 1px 3px #000}
+.sx-cam.flash{animation:sxf .5s}@keyframes sxf{0%{box-shadow:inset 0 0 0 999px rgba(92,255,157,.75)}}
+.sxr{border-radius:16px;padding:12px 14px;margin:12px auto 0;max-width:420px;color:#3A2A1E;animation:sxp .35s cubic-bezier(.3,1.5,.5,1)}@keyframes sxp{from{transform:scale(.85);opacity:0}}
+.sxr.ok{background:#E3F6EC}.sxr.dup{background:#FFF4D6}.sxr.bad{background:#FDEBE4}
+.sxr h3{margin:0;font-size:22px}.sxr .w{font-weight:800;font-size:16px}.sxr .its{font-size:14px;margin-top:2px}
+.sxpay{display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:8px 10px;margin-top:8px;border:2px solid #F0B3A0}.sxpay b{flex:1;color:#C0431F;font-size:17px}.sxpay button{background:#1D9E75;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:900}
+.sx-man{display:flex;gap:8px;max-width:420px;margin:12px auto 0}.sx-man input{flex:1;border-radius:12px;border:0;padding:10px;font-size:18px;text-align:center;letter-spacing:6px;text-transform:uppercase}.sx-man button{background:#fff;color:#3A2A1E;border-radius:12px;padding:0 16px;font-weight:900;white-space:nowrap}
+.sx-cnt{display:flex;gap:8px;max-width:420px;margin:12px auto 0}.sx-cnt div{flex:1;background:#2E2620;border-radius:12px;text-align:center;padding:6px;font-size:12px;color:#CDBFAE}.sx-cnt b{display:block;font-size:22px;color:#fff}
 </style>
 </head>
 <body>
@@ -157,6 +172,7 @@ td.n,th.n{text-align:right}
         <div class="g3"><div class="f"><label>選擇揪團</label><select id="pSel"></select></div>
           <div class="f"><label>領餐、收款：輸入分機</label><input id="pExt" class="big-search" inputmode="numeric" placeholder="分機"></div></div>
       </div>
+      <button class="scanbtn" id="scanOpen">📷 取餐核銷（掃同事的 QR）</button>
       <div class="kpis" id="kpis"></div>
       <div class="card" id="payList"></div>
       <div class="row" style="flex-wrap:wrap;margin-bottom:12px">
@@ -217,6 +233,13 @@ td.n,th.n{text-align:right}
 <div class="viewer hide" id="viewer"><div class="vbar"><b id="vTitle"></b><button id="vZoom">🔍 放大</button><button class="close" id="vClose">縮小 ✕</button></div><div class="vbody" id="vBody"></div></div>
 <div class="toast" id="toast"></div>
 
+<div class="scanx hide" id="scanx">
+  <div class="sx-top"><b>📷 取餐核銷</b><span id="sxG"></span><button id="sxClose">結束</button></div>
+  <div class="sx-cam"><video id="sxV" playsinline muted></video><div class="sx-fr"><i></i></div><div class="sx-tip" id="sxTip">把同事手機的 QR 對準框框</div></div>
+  <div id="sxRes"></div>
+  <div class="sx-man"><input id="sxCode" maxlength="4" placeholder="或輸入 4 碼取餐碼" autocapitalize="characters"><button id="sxGo">核銷</button></div>
+  <div class="sx-cnt" id="sxCnt"></div>
+</div>
 <script src="version.js"></script>
 <script src="config.js"></script>
 <script src="seed.js"></script>
@@ -370,7 +393,39 @@ function fillSel(){var v=$('pSel').value;var t=T();
   $('pSel').innerHTML=GL.groups.map(function(g){return '<option value="'+g.id+'">'+(g.emoji||KN[g.kind].split(' ')[0])+' '+md(g.endAt)+' '+esc(g.title)+'（'+STN[g.state]+'）</option>'}).join('')||'<option value="">還沒有揪團</option>';
   if(v&&GL.groups.some(function(g){return g.id===v}))$('pSel').value=v;
   else{var ko={bento:0,drink:1,other:2},d=GL.groups.filter(function(g){return g.state==='open'||g.state==='closed'}).sort(function(a,b){return ko[a.kind]-ko[b.kind]})[0];if(d)$('pSel').value=d.id}}
-$('pSel').onchange=function(){openRows={};loadPay()};$('refresh').onclick=function(){loadPay()};
+$('pSel').onchange=function(){openRows={};loadPay()};
+// ---------- 取餐核銷 ----------
+var SX={stream:null,timer:null,det:null,last:'',lastAt:0,busy:false,cv:null};
+function sxCnt(){var g=CUR;if(!g)return;var pk=g.people.filter(function(p){return p.picked}).length,un=g.people.filter(function(p){return !p.paid}).length;
+  $('sxCnt').innerHTML='<div>已領<b>'+pk+'</b></div><div>還沒領<b>'+(g.people.length-pk)+'</b></div><div>未付款<b style="color:#FF9C7A">'+un+'</b></div>'}
+function loadScript(src){return new Promise(function(ok,no){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){no(new Error('載入失敗'))};document.head.appendChild(s)})}
+$('scanOpen').onclick=function(){if(!CUR)return toast('先選擇揪團',1);if(CUR.mode==='link')return toast('線上點餐的團不用核銷',1);
+  $('scanx').classList.remove('hide');document.body.style.overflow='hidden';$('sxG').textContent=CUR.title+'・'+CUR.people.length+' 人';$('sxRes').innerHTML='';sxCnt();startCam()};
+$('sxClose').onclick=stopScan;
+function stopScan(){$('scanx').classList.add('hide');document.body.style.overflow='';if(SX.timer)clearInterval(SX.timer);SX.timer=null;if(SX.stream)SX.stream.getTracks().forEach(function(t){t.stop()});SX.stream=null;drawPay()}
+function startCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('sxTip').textContent='這支手機不能開相機，請用下面輸入取餐碼';return}
+  $('sxTip').textContent='正在打開相機…';
+  var ready=('BarcodeDetector' in window)?Promise.resolve().then(function(){SX.det=new BarcodeDetector({formats:['qr_code']})}).catch(function(){SX.det=null;return loadScript('lib/jsQR.js')}):(window.jsQR?Promise.resolve():loadScript('lib/jsQR.js'));
+  ready.then(function(){return navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})}).then(function(st){
+    SX.stream=st;var v=$('sxV');v.srcObject=st;v.play();$('sxTip').textContent='把同事手機的 QR 對準框框';
+    SX.cv=document.createElement('canvas');SX.timer=setInterval(tick,220)})
+  .catch(function(e){$('sxTip').textContent=/Permission|NotAllowed/i.test(e.name||e.message)?'相機被拒絕了：請到瀏覽器設定允許相機，或用下面輸入取餐碼':'打不開相機，請用下面輸入取餐碼'})}
+function tick(){var v=$('sxV');if(SX.busy||!v.videoWidth)return;
+  if(SX.det){SX.det.detect(v).then(function(r){if(r&&r[0])got(r[0].rawValue)}).catch(function(){});return}
+  if(!window.jsQR)return;var w=Math.min(640,v.videoWidth),h=Math.round(v.videoHeight*w/v.videoWidth),c=SX.cv;c.width=w;c.height=h;var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);
+  var r=jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'dontInvert'});if(r&&r.data)got(r.data)}
+function got(text){var now=Date.now();if(text===SX.last&&now-SX.lastAt<4000)return;SX.last=text;SX.lastAt=now;doPick(text)}
+function doPick(code){if(SX.busy)return;SX.busy=true;var cam=document.querySelector('.sx-cam');cam.classList.remove('flash');void cam.offsetWidth;cam.classList.add('flash');
+  if(navigator.vibrate)navigator.vibrate(60);
+  api('pickScan',{groupId:CUR.id,code:code}).then(function(r){CUR=r.group;sxCnt();
+    var its=r.items.map(function(i){return esc(i.item)+' × '+i.qty}).join('、');
+    $('sxRes').innerHTML='<div class="sxr '+(r.already?'dup':'ok')+'"><h3>'+(r.already?'⚠️ 已經領過了':'✓ 已領取')+'</h3><div class="w">'+esc(r.ext)+(r.name?' '+esc(r.name):'')+(r.already?'・'+r.at+' 領走':'')+'</div><div class="its">'+its+'</div>'+
+      (r.unpaid?'<div class="sxpay"><b>💰 還沒付 '+money(r.unpaid)+'</b><button id="sxPay">收到現金</button></div>':'<div style="font-weight:800;color:#16704F;margin-top:6px">💵 已付款</div>')+'</div>';
+    if($('sxPay'))$('sxPay').onclick=function(){var b=this;b.disabled=true;api('setPaid',{groupId:CUR.id,ext:r.ext,value:true}).then(function(g){CUR=g;sxCnt();b.parentNode.outerHTML='<div style="font-weight:800;color:#16704F;margin-top:6px">💵 已收 '+money(r.unpaid)+'</div>';toast('已收 '+money(r.unpaid)+'，分機 '+r.ext)}).catch(function(e){b.disabled=false;toast(e.message,1)})};
+  }).catch(function(e){$('sxRes').innerHTML='<div class="sxr bad"><h3>✕ 沒辦法核銷</h3><div class="its">'+esc(e.message)+'</div></div>'}).then(function(){SX.busy=false})}
+$('sxGo').onclick=function(){var v=$('sxCode').value.trim();if(!v)return $('sxCode').focus();doPick(v);$('sxCode').value=''};
+$('sxCode').onkeydown=function(e){if(e.key==='Enter')$('sxGo').click()};$('refresh').onclick=function(){loadPay()};
 function loadPay(){var id=$('pSel').value;if(!id){$('payList').innerHTML='<div class="pad muted">還沒有揪團</div>';$('kpis').innerHTML='';return}
   $('payList').innerHTML='<div class="loading"><img src="img/logo_frame.png" alt="">讀取中…</div>';
   return api('adminGroup',{id:id}).then(function(r){CUR=r;drawPay()}).catch(function(e){toast(e.message,1)})}
