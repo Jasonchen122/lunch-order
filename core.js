@@ -379,10 +379,11 @@ var LunchCore = (function () {
       }
       var mine = rows.filter(function (o) { return o.ext === ext; });
       if (!mine.length) err('分機 ' + ext + ' 在這一團沒有點餐');
-      var already = mine.every(function (o) { return o.picked; }), at = '';
+      var already = mine.every(function (o) { return o.picked; }), at = '', pay = str(p.mode) === 'pay';
       if (already) at = mine.map(function (o) { return str(o.updatedAt); }).sort().pop().slice(11, 16);
+      else if (pay) { }
       else { var ts = tp(now()).iso; at = ts.slice(11, 16); mine.forEach(function (o) { store.update('orders', 'id', o.id, { picked: '1', updatedAt: ts }); }); }
-      return { ext: ext, name: (mine.filter(function (o) { return o.name; })[0] || {}).name || '', already: already, at: at,
+      return { ext: ext, name: (mine.filter(function (o) { return o.name; })[0] || {}).name || '', already: already, at: at, mode: pay ? 'pay' : 'pick', picked: already,
         items: mine.map(function (o) { return { item: o.item, qty: o.qty }; }),
         unpaid: mine.filter(function (o) { return !o.paid; }).reduce(function (a, o) { return a + o.amount; }, 0),
         group: adminGroup(x.g.id) };

@@ -100,6 +100,10 @@ td.n,th.n{text-align:right}
 .scanbtn{width:100%;margin:0 0 12px;padding:14px;font-size:18px;font-weight:900;border-radius:16px;background:#1D9E75;border:0;color:#fff}
 .scanx{position:fixed;inset:0;background:#1A1512;z-index:200;overflow-y:auto;padding:12px 14px 30px;color:#fff}
 .sx-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sx-top b{font-size:18px}.sx-top span{flex:1;font-size:13px;color:#CDBFAE;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.sx-top button{background:#fff;color:#3A2A1E;border-radius:10px;padding:6px 14px;font-weight:800}
+.sx-mode{display:flex;background:#2E2620;border-radius:14px;padding:4px;gap:4px;max-width:420px;margin:0 auto 6px}.sx-mode button{flex:1;border:0;background:transparent;color:#CDBFAE;border-radius:10px;padding:9px;font-weight:900;font-size:16px}
+.sx-mode button.on[data-m="pay"]{background:#F4BE3A;color:#5A3A00}.sx-mode button.on[data-m="pick"]{background:#1D9E75;color:#fff}
+.sx-mtip{text-align:center;font-size:13px;color:#CDBFAE;margin-bottom:8px}.sx-mtip b{color:#fff}
+.sxr.paym{background:#FFF6D6}
 .sx-cam{position:relative;background:#000;border-radius:18px;overflow:hidden;aspect-ratio:1/1;max-width:420px;margin:0 auto}
 .sx-cam video{width:100%;height:100%;object-fit:cover;display:block}
 .sx-fr{position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1/1;transform:translate(-50%,-50%);border:4px solid #fff;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
@@ -235,6 +239,7 @@ td.n,th.n{text-align:right}
 
 <div class="scanx hide" id="scanx">
   <div class="sx-top"><b>📷 取餐核銷</b><span id="sxG"></span><button id="sxClose">結束</button></div>
+  <div class="sx-mode" id="sxMode"><button data-m="pay">💰 收款</button><button data-m="pick">🍱 取餐</button></div><div class="sx-mtip" id="sxMtip"></div>
   <div class="sx-cam"><video id="sxV" playsinline muted></video><div class="sx-fr"><i></i></div><div class="sx-tip" id="sxTip">把同事手機的 QR 對準框框</div></div>
   <div id="sxRes"></div>
   <div class="sx-man"><input id="sxCode" maxlength="4" placeholder="或輸入 4 碼取餐碼" autocapitalize="characters"><button id="sxGo">核銷</button></div>
@@ -395,12 +400,14 @@ function fillSel(){var v=$('pSel').value;var t=T();
   else{var ko={bento:0,drink:1,other:2},d=GL.groups.filter(function(g){return g.state==='open'||g.state==='closed'}).sort(function(a,b){return ko[a.kind]-ko[b.kind]})[0];if(d)$('pSel').value=d.id}}
 $('pSel').onchange=function(){openRows={};loadPay()};
 // ---------- 取餐核銷 ----------
-var SX={stream:null,timer:null,det:null,last:'',lastAt:0,busy:false,cv:null};
+var SX={mode:'pick',stream:null,timer:null,det:null,last:'',lastAt:0,busy:false,cv:null};
 function sxCnt(){var g=CUR;if(!g)return;var pk=g.people.filter(function(p){return p.picked}).length,un=g.people.filter(function(p){return !p.paid}).length;
   $('sxCnt').innerHTML='<div>已領<b>'+pk+'</b></div><div>還沒領<b>'+(g.people.length-pk)+'</b></div><div>未付款<b style="color:#FF9C7A">'+un+'</b></div>'}
 function loadScript(src){return new Promise(function(ok,no){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){no(new Error('載入失敗'))};document.head.appendChild(s)})}
 $('scanOpen').onclick=function(){if(!CUR)return toast('先選擇揪團',1);if(CUR.mode==='link')return toast('線上點餐的團不用核銷',1);
-  $('scanx').classList.remove('hide');document.body.style.overflow='hidden';$('sxG').textContent=CUR.title+'・'+CUR.people.length+' 人';$('sxRes').innerHTML='';sxCnt();startCam()};
+  $('scanx').classList.remove('hide');document.body.style.overflow='hidden';$('sxG').textContent=CUR.title+'・'+CUR.people.length+' 人';$('sxRes').innerHTML='';var lt=((window.LUNCH_CONFIG&&window.LUNCH_CONFIG.lunchTime)||'12:30'),nw=LunchCore.tp(new Date()).iso.slice(11,16);setMode(CUR.state==='open'||nw<lt?'pay':'pick');sxCnt();startCam()};
+function setMode(m){SX.mode=m;[].forEach.call($('sxMode').children,function(b){b.classList.toggle('on',b.dataset.m===m)});$('sxMtip').innerHTML=m==='pay'?'<b>收款模式</b>：掃到只記付款，不會變成已領取':'<b>取餐模式</b>：掃到就變已領取，沒付的可以順手收';$('sxRes').innerHTML='';SX.last=''}
+$('sxMode').onclick=function(e){var b=e.target.closest('[data-m]');if(b)setMode(b.dataset.m)};
 $('sxClose').onclick=stopScan;
 function stopScan(){$('scanx').classList.add('hide');document.body.style.overflow='';if(SX.timer)clearInterval(SX.timer);SX.timer=null;if(SX.stream)SX.stream.getTracks().forEach(function(t){t.stop()});SX.stream=null;drawPay()}
 function startCam(){
@@ -418,9 +425,11 @@ function tick(){var v=$('sxV');if(SX.busy||!v.videoWidth)return;
 function got(text){var now=Date.now();if(text===SX.last&&now-SX.lastAt<4000)return;SX.last=text;SX.lastAt=now;doPick(text)}
 function doPick(code){if(SX.busy)return;SX.busy=true;var cam=document.querySelector('.sx-cam');cam.classList.remove('flash');void cam.offsetWidth;cam.classList.add('flash');
   if(navigator.vibrate)navigator.vibrate(60);
-  api('pickScan',{groupId:CUR.id,code:code}).then(function(r){CUR=r.group;sxCnt();
+  api('pickScan',{groupId:CUR.id,code:code,mode:SX.mode}).then(function(r){CUR=r.group;sxCnt();
     var its=r.items.map(function(i){return esc(i.item)+' × '+i.qty}).join('、');
-    $('sxRes').innerHTML='<div class="sxr '+(r.already?'dup':'ok')+'"><h3>'+(r.already?'⚠️ 已經領過了':'✓ 已領取')+'</h3><div class="w">'+esc(r.ext)+(r.name?' '+esc(r.name):'')+(r.already?'・'+r.at+' 領走':'')+'</div><div class="its">'+its+'</div>'+
+    if(r.mode==='pay')$('sxRes').innerHTML='<div class="sxr '+(r.unpaid?'paym':'ok')+'"><h3>'+(r.unpaid?'💰 收款':'✓ 已經付過了')+'</h3><div class="w">'+esc(r.ext)+(r.name?' '+esc(r.name):'')+(r.picked?'・已領取':'')+'</div><div class="its">'+its+'</div>'+
+      (r.unpaid?'<div class="sxpay"><b>還沒付 '+money(r.unpaid)+'</b><button id="sxPay">收到現金</button></div>':'<div style="font-weight:800;color:#16704F;margin-top:6px">💵 不用再收錢</div>')+'</div>';
+    else $('sxRes').innerHTML='<div class="sxr '+(r.already?'dup':'ok')+'"><h3>'+(r.already?'⚠️ 已經領過了':'✓ 已領取')+'</h3><div class="w">'+esc(r.ext)+(r.name?' '+esc(r.name):'')+(r.already?'・'+r.at+' 領走':'')+'</div><div class="its">'+its+'</div>'+
       (r.unpaid?'<div class="sxpay"><b>💰 還沒付 '+money(r.unpaid)+'</b><button id="sxPay">收到現金</button></div>':'<div style="font-weight:800;color:#16704F;margin-top:6px">💵 已付款</div>')+'</div>';
     if($('sxPay'))$('sxPay').onclick=function(){var b=this;b.disabled=true;api('setPaid',{groupId:CUR.id,ext:r.ext,value:true}).then(function(g){CUR=g;sxCnt();b.parentNode.outerHTML='<div style="font-weight:800;color:#16704F;margin-top:6px">💵 已收 '+money(r.unpaid)+'</div>';toast('已收 '+money(r.unpaid)+'，分機 '+r.ext)}).catch(function(e){b.disabled=false;toast(e.message,1)})};
   }).catch(function(e){$('sxRes').innerHTML='<div class="sxr bad"><h3>✕ 沒辦法核銷</h3><div class="its">'+esc(e.message)+'</div></div>'}).then(function(){SX.busy=false})}
