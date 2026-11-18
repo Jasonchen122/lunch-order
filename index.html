@@ -229,6 +229,37 @@
 .hole.up img{bottom:6%}.hole.hit img{filter:saturate(.2) brightness(1.2);transform:rotate(-15deg)}
 .hole .pt{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-weight:900;color:#D93A30;pointer-events:none;animation:fadeup .5s both}
 .hud{display:flex;justify-content:space-between;font-weight:900;font-size:18px}
+.cs-head2{display:flex;align-items:center;gap:8px;position:relative}.cs-head2 img{width:34px;animation:cspin 3s linear infinite}.cs-head2 b{font-size:21px;color:#633806;flex:1}.cs-head2 .cs-x{position:static}
+.cs-me{text-align:center;background:linear-gradient(180deg,#FFF6D6,#fff)}.cs-me .lvn{font-weight:900;color:#8A5A12}
+.cs-me>.chip{font-size:20px;padding:9px 20px;margin:8px 0 4px}
+.bal2{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--sub)}.bal2 b{font-size:30px;color:var(--ink)}.bal2 img{width:30px}
+.nextlv{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;text-align:center;margin-top:10px}
+.nextlv .box{background:var(--bg);border-radius:14px;padding:10px 4px}.nextlv .box[data-pv]{cursor:pointer}
+.nextlv small{display:block;font-size:11px;color:var(--sub);margin-bottom:6px}.nextlv .chip{font-size:14px;padding:5px 11px}
+.nextlv .arr{font-size:22px;color:#E0A10E;animation:nudge 1s ease-in-out infinite}@keyframes nudge{50%{transform:translateX(4px)}}
+.bar2{height:14px;border-radius:7px;background:#F1E6D2;margin:12px 0 4px;position:relative}.bar2 i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#FFD54A,#E0A10E)}
+.bar2 img{position:absolute;top:50%;width:26px;transform:translate(-50%,-50%)}
+.bt{font-size:13px;color:var(--sub);text-align:center}.bt b{color:#B07A00}
+.ct2{font-weight:900;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:6px}.ct2 small{margin-left:auto;font-weight:700;color:var(--sub);font-size:12px}
+.tasks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tk2{border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;position:relative;background:#fff;cursor:pointer}
+.tk2 .ic{font-size:24px;line-height:1}.tk2 b{display:block;font-size:13px;margin-top:4px;line-height:1.3}
+.tk2 .pl{position:absolute;right:8px;top:8px;background:#FFD54A;color:#5A3A00;font-weight:900;font-size:12px;border-radius:999px;padding:1px 7px}
+.tk2 .st{font-size:11px;font-weight:800;margin-top:4px;color:#B07A00}
+.tk2.done{background:#EAF7EF;border-color:#9FD9B8;cursor:default}.tk2.done .st{color:#1D7A55}.tk2.done .pl{background:#1D9E75;color:#fff}
+.tk2.wide{grid-column:1/-1;display:flex;gap:10px;align-items:center;cursor:default}.tk2.wide b{margin:0}
+.dots{display:flex;gap:4px;margin-top:4px}.dots i{width:16px;height:16px;border-radius:50%;background:#F1E6D2;font-style:normal;font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--sub)}.dots i.on{background:#E0A10E;color:#fff}
+.ladder{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 6px;scroll-snap-type:x mandatory}
+.lvc{flex:0 0 132px;scroll-snap-align:start;border:1.5px solid var(--line);border-radius:14px;padding:16px 8px 10px;text-align:center;position:relative;background:#fff;cursor:pointer}
+.lvc .chip{font-size:13px;padding:4px 10px;margin:0}.lvc b{display:block;font-size:13px;margin-top:8px}.lvc span{font-size:11px;color:var(--sub)}
+.lvc.cur{border:2px solid #E0A10E;background:#FFFBEE}.lvc.cur:after{content:"現在";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#E0A10E;color:#fff;font-size:11px;font-weight:900;border-radius:999px;padding:1px 8px}
+.lvc.lock .chip{filter:grayscale(.85) opacity(.55)}.lvc .lk{position:absolute;right:6px;top:6px;font-size:14px}
+.lvc .need{display:inline-block;margin-top:4px;background:#3A2A1E;color:#FFD54A!important;font-size:11px;font-weight:900;border-radius:999px;padding:1px 8px}
+.lvprev{position:fixed;inset:0;background:rgba(42,35,64,.94);z-index:95;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;color:#fff}
+.lvprev.show{display:flex}.lvprev img{width:210px;max-width:80%;animation:lvpop .9s cubic-bezier(.3,1.6,.5,1) both;display:block;margin:0 auto}
+.lvprev .chip{font-size:22px;padding:10px 22px;margin:18px 0 8px;color:var(--ink)}.lvprev b{display:block;font-size:20px;color:#FFD54A}.lvprev p{margin:4px 0;color:#E9E4FF;font-size:14px}
+.lvprev button{margin-top:14px;padding:8px 30px;color:var(--ink);background:#fff;border-radius:12px;font-weight:800}
+.cbb small .nx{color:#8A5A12;font-weight:800}
 .lvlist{font-size:13px;color:var(--sub);margin-top:8px}.lvlist div{display:flex;justify-content:space-between;padding:3px 0;border-top:1px dashed var(--line)}.lvlist div.cur{color:#633806;font-weight:800}
 .rs-h{display:flex;gap:10px;align-items:center;margin-bottom:10px}.rs-h img{width:56px}.rs-h b{font-size:19px;display:block;color:#085041}.rs-h span{font-size:13px;color:var(--sub)}
 .rs-x{margin-left:auto;align-self:flex-start;border:none;background:#fff;border-radius:50%;width:36px;height:36px;padding:0;font-size:16px}
@@ -655,7 +686,7 @@ function drawBar(plus,label){
     $('cbExt').onkeydown=function(e){if(e.key==='Enter')$('cbGo').click()};
   }else{
     b.classList.remove('unk');var nm=CM.name||me.name||'分機 '+CM.ext;
-    b.innerHTML='<div class="cbb cbc" id="coinBtn">'+(plus?'<span class="plus">+'+plus+' 🪙</span>':'')+'<img class="c" src="img/coin-64.png" alt=""><div><b>'+(plus?(label||'熊幣')+' +'+plus+'！':esc(nm)+' '+CM.balance+' 枚<span class="lvt">Lv'+(CM.level+1)+'</span>')+'</b><small>'+(plus?'現在 '+CM.balance+' 枚・去玩一把':(CM.balance?'點我玩扭蛋、打 TOM':'一起點餐就能拿熊幣'))+'</small></div></div>'+REC_BTN;
+    b.innerHTML='<div class="cbb cbc" id="coinBtn">'+(plus?'<span class="plus">+'+plus+' 🪙</span>':'')+'<img class="c" src="img/coin-64.png" alt=""><div><b>'+(plus?(label||'熊幣')+' +'+plus+'！':esc(nm)+' '+CM.balance+' 枚<span class="lvt">Lv'+(CM.level+1)+'</span>')+'</b><small>'+(plus?'現在 '+CM.balance+' 枚・去玩一把':(CM.nextAt?'<span class="nx">再 '+(CM.nextAt-CM.earned)+' 枚升 Lv'+(CM.level+2)+'</span>・點我看':(CM.balance?'點我玩扭蛋、打 TOM':'一起點餐就能拿熊幣')))+'</small></div></div>'+REC_BTN;
     $('coinBtn').onclick=openCS;
   }
   $('recBtn').onclick=openRec;
@@ -673,18 +704,32 @@ function coinPop(n,up,msg){var d=document.createElement('div');d.className='cpop
 function openCS(){if(!CM)return;drawCS();$('cs').classList.add('open');$('csBg').classList.add('open');document.body.style.overflow='hidden'}
 function closeCS(){$('cs').classList.remove('open');$('csBg').classList.remove('open');document.body.style.overflow='';if(wTimer){clearInterval(wTimer);clearInterval(wPop);wTimer=null}}
 $('csBg').onclick=closeCS;
+function csChip(i,c){return '<span class="chip lv'+i+'">'+esc(c.ext)+(c.name?' <small>'+esc(c.name)+'</small>':'')+'</span>'}
 function drawCS(){
-  var c=CM,nx=c.nextAt,pc=nx?Math.round((c.earned-c.levelAt)/(nx-c.levelAt)*100):100,bd=c.breakdown;
-  $('cs').innerHTML='<div class="cs-head"><button class="cs-x" id="csX" aria-label="關閉">✕</button><img class="big" src="img/coin.png" alt="熊幣"><h3>熊幣樂園</h3></div>'+
-   '<div class="cs-card people"><div class="row"><span class="chip lv'+c.level+'" style="margin:0">'+esc(c.ext)+(c.name?' <small>'+esc(c.name)+'</small>':'')+'</span><b style="margin-left:auto">'+LVN[c.level]+'</b></div>'+
-   '<div class="cs-bal" style="margin-top:6px"><img src="img/coin-64.png" alt=""><span id="csBal">'+c.balance+'</span><span style="font-size:15px;color:var(--sub)">枚熊幣</span></div>'+
-   '<div style="font-size:13px;color:var(--sub)">累積 <b>'+c.earned+'</b> 枚・玩掉 <b>'+c.spent+'</b> 枚</div><div class="cs-lv"><i style="width:'+pc+'%"></i></div>'+
-   '<div style="font-size:13px;color:var(--sub)">'+(nx?'再拿 '+(nx-c.earned)+' 枚升到 '+c.nextName+'，名字會變成'+LVF[c.level+1]:'最高等級！你就是午餐傳說 👑')+'</div>'+
-   '<div class="cs-week">'+['一','二','三','四','五'].map(function(d,i){return '<div><span class="'+(c.week[i]?'on':'')+'"></span>週'+d+'</div>'}).join('')+'</div>'+
-   '<div class="cs-bd"><span>🍱 點便當 <b>'+bd.bento+'</b> 天</span><span>🧋 點飲料 <b>'+bd.drink+'</b> 天</span><span>✨ 其他揪團 <b>'+bd.other+'</b> 團</span><span>🏆 成團功臣 <b>'+bd.hero+'</b> 次</span><span>🔥 連續 5 天 <b>+'+bd.streak+'</b></span><span>📸 推薦菜單 <b>'+(bd.recSent||0)+'</b> 天</span><span>🌟 推薦被採用 <b>'+(bd.recAdopted||0)+'</b> 次</span></div></div>'+
-   '<div class="cs-card"><div class="cs-tabs" id="csTabs"><button data-g="gacha"'+(CSTAB==='gacha'?' class="on"':'')+'>🎰 午餐扭蛋</button><button data-g="whack"'+(CSTAB==='whack'?' class="on"':'')+'>🔨 打 TOM</button></div><div id="game"></div></div>'+
-   '<details class="cs-card"><summary style="font-weight:800;cursor:pointer">怎麼拿熊幣、等級有什麼</summary><div style="font-size:14px;margin-top:6px;line-height:1.8">🍱 當天有點便當 +1<br>🧋 當天有點飲料，或線上點餐按「我點好了」+1<br>✨ 參加其他揪團 +1（每團）<br>🏆 成團功臣：送出時剛好讓大家成團 +1<br>🔥 連續 5 個工作天都點便當 +2<br>📸 推薦新菜單 +1（每天一次）<br>🌟 推薦被管理員採用 +1</div>'+
-   '<div class="lvlist">'+LVN.map(function(n,i){return '<div class="'+(i===c.level?'cur':'')+'"><span>'+n+'（'+LVA[i]+' 枚）</span><span>'+LVF[i]+'</span></div>'}).join('')+'</div></details>';
+  var c=CM,lv=c.level,nx=c.nextAt,pc=nx?Math.round((c.earned-c.levelAt)/(nx-c.levelAt)*100):100,td=c.todayDone||{},bw=c.bweek||c.week||[];
+  var T=[['bento','🍱','點便當',1,'去點便當 →'],['drink','🧋','點飲料／我點好了',1,'去點飲料 →'],['hero','🏆','成團功臣',1,'送出剛好成團'],['other','✨','參加其他揪團',1,'每團 +1'],['rec','📸','推薦新菜單',1,'拍菜單 →'],['adopted','🌟','推薦被採用',1,'等管理員採用']];
+  $('cs').innerHTML='<div class="cs-head2"><img src="img/coin-64.png" alt=""><b>熊幣樂園</b><button class="cs-x" id="csX" aria-label="關閉">✕</button></div>'+
+   '<div class="cs-card cs-me people"><div class="lvn">'+LVN[lv]+'</div>'+csChip(lv,c)+
+   '<div class="bal2"><img src="img/coin-64.png" alt=""><b id="csBal">'+c.balance+'</b> 枚可以玩・累積 '+c.earned+' 枚</div>'+
+   (nx?'<div class="nextlv"><div class="box"><small>現在</small>'+csChip(lv,c)+'</div><span class="arr">➜</span><div class="box" data-pv="'+(lv+1)+'"><small>Lv'+(lv+2)+' 升級後 👀</small>'+csChip(lv+1,c)+'</div></div>'+
+     '<div class="bar2"><i style="width:'+pc+'%"></i><img src="img/coin-64.png" alt="" style="left:'+Math.max(4,Math.min(96,pc))+'%"></div><div class="bt">再拿 <b>'+(nx-c.earned)+' 枚</b> 就升到 '+LVN[lv+1]+'！</div>'
+     :'<div class="bt" style="margin-top:10px">👑 最高等級！你就是午餐傳說</div>')+'</div>'+
+   '<div class="cs-card"><div class="ct2">🎯 今天怎麼拿熊幣<small>每天都能拿</small></div><div class="tasks">'+
+    T.map(function(t){var d=!!td[t[0]];return '<div class="tk2'+(d?' done':'')+'" data-go="'+t[0]+'"><span class="pl">+'+t[3]+'</span><div class="ic">'+t[1]+'</div><b>'+t[2]+'</b><div class="st">'+(d?'✓ 今天拿到了':t[4])+'</div></div>'}).join('')+
+    '<div class="tk2 wide"><div class="ic">🔥</div><div style="flex:1"><b>連續 5 個工作天點便當 +2</b><div class="dots">'+['一','二','三','四','五'].map(function(d,i){return '<i class="'+(bw[i]?'on':'')+'">'+d+'</i>'}).join('')+'</div></div><span class="pl" style="position:static">+2</span></div></div></div>'+
+   '<div class="cs-card"><div class="ct2">🏅 等級收藏<small>點一下預覽 ›</small></div><div class="ladder" id="ladder">'+
+    LVN.map(function(n,i){var lk=i>lv;return '<div class="lvc'+(i===lv?' cur':'')+(lk?' lock':'')+'" data-pv="'+i+'">'+(lk?'<span class="lk">🔒</span>':'')+csChip(i,c)+'<b>'+n+'</b><span>'+LVF[i]+'</span>'+(lk?'<br><span class="need">還差 '+(LVA[i]-c.earned)+' 枚</span>':'')+'</div>'}).join('')+'</div></div>'+
+   '<div class="cs-card"><div class="ct2">🎮 用熊幣玩一下<small>每次 1 枚</small></div><div class="cs-tabs" id="csTabs"><button data-g="gacha"'+(CSTAB==='gacha'?' class="on"':'')+'>🎰 午餐扭蛋</button><button data-g="whack"'+(CSTAB==='whack'?' class="on"':'')+'>🔨 打 TOM</button></div><div id="game"></div></div>'+
+   '';
+  if(!$('lvPrev')){var lp=document.createElement('div');lp.className='lvprev';lp.id='lvPrev';document.body.appendChild(lp)}
+  setTimeout(function(){var l=$('ladder'),cu=l&&l.querySelector('.cur');if(cu)l.scrollLeft=cu.offsetLeft-40},60);
+  $('cs').onclick=function(e){
+    var pv=e.target.closest('[data-pv]');if(pv){var i=+pv.dataset.pv;$('lvPrev').innerHTML='<div class="people"><img src="img/levelup.png" alt="LEVEL UP!">'+csChip(i,c)+'<b>'+LVN[i]+'</b><p>'+LVF[i]+'・大家的點餐清單都看得到</p><p>'+(i<=lv?'你已經解鎖了 🎉':'累積 '+LVA[i]+' 枚就是你的！還差 '+(LVA[i]-c.earned)+' 枚')+'</p><button id="pvX">好</button></div>';$('lvPrev').classList.add('show');$('pvX').onclick=function(ev){ev.stopPropagation();$('lvPrev').classList.remove('show')};return}
+    var go=e.target.closest('[data-go]');if(!go||go.classList.contains('done'))return;var k=go.dataset.go;
+    if(k==='rec'){closeCS();openRec();return}
+    if(k==='bento'||k==='drink'||k==='other'){var g=H&&H.groups.filter(function(x){return x.kind===k&&x.state==='open'})[0];
+      if(!g)return toast(k==='bento'?'今天還沒有開便當團喔':k==='drink'?'今天還沒有開飲料團喔':'現在沒有其他揪團',1);
+      closeCS();sel=g.id;viewExt='';drawCards();drawDetail(true);setTimeout(function(){$('detail').scrollIntoView({behavior:'smooth',block:'start'})},300)}};
   $('csX').onclick=closeCS;
   $('csTabs').onclick=function(e){var b=e.target.closest('[data-g]');if(!b)return;CSTAB=b.dataset.g;if(wTimer){clearInterval(wTimer);clearInterval(wPop);wTimer=null}drawCS()};
   if(CSTAB==='gacha')drawGacha();else drawWhack();

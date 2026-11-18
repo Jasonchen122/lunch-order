@@ -184,17 +184,17 @@ var LunchCore = (function () {
     function lvOf(n) { var i = 0; LEVELS.forEach(function (l, k) { if (n >= l[0]) i = k; }); return i; }
     function pointsAll(D) {
       var t = tp(now()), P = {}, names = {};
-      function rec(e) { return P[e] || (P[e] = { bento: {}, drink: {}, other: {}, hero: 0 }); }
+      function rec(e) { return P[e] || (P[e] = { bento: {}, drink: {}, other: {}, hero: 0, otherDays: {}, heroDays: {} }); }
       D.groups.forEach(function (g) {
         if (g.cancelled || stateOf(g, t) === 'upcoming') return;
         var day = g.endAt.slice(0, 10), rows = (D.byG[g.id] || []).slice();
-        rows.forEach(function (o) { if (o.name) names[o.ext] = o.name; var r = rec(o.ext); if (g.kind === 'other') r.other[g.id] = 1; else r[g.kind][day] = 1; });
+        rows.forEach(function (o) { if (o.name) names[o.ext] = o.name; var r = rec(o.ext); if (g.kind === 'other') { r.other[g.id] = 1; r.otherDays[day] = 1; } else r[g.kind][day] = 1; });
         if (g.kind === 'drink') (D.marks[g.id] || []).forEach(function (m) { rec(m.ext).drink[day] = 1; if (m.name && !names[m.ext]) names[m.ext] = m.name; });
         if (g.mode !== 'link' && g.min > 0) {
           rows.sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : (a.id < b.id ? -1 : 1); });
           var sum = 0, hero = '';
           for (var i = 0; i < rows.length; i++) { sum += rows[i].amount; if (sum >= g.min) { hero = rows[i].ext; break; } }
-          if (hero) rec(hero).hero++;
+          if (hero) { rec(hero).hero++; rec(hero).heroDays[day] = 1; }
         }
       });
       store.all('recs').forEach(function (x) {
@@ -219,10 +219,17 @@ var LunchCore = (function () {
       var p = P[ext] || { earned: 0, breakdown: { bento: 0, drink: 0, other: 0, hero: 0, streak: 0, recSent: 0, recAdopted: 0 }, days: { bento: {}, drink: {} }, name: '', adoptedList: [] };
       var t = tp(now()), li = lvOf(p.earned), nx = LEVELS[li + 1], spent = S[ext] || 0;
       var mon = addDays(t.date, -((t.dow + 6) % 7)), week = [];
-      for (var i = 0; i < 5; i++) { var d = addDays(mon, i); week.push(!!(p.days.bento && p.days.bento[d]) || !!(p.days.drink && p.days.drink[d])); }
+      var bweek = [];
+      for (var i = 0; i < 5; i++) { var d = addDays(mon, i); week.push(!!(p.days.bento && p.days.bento[d]) || !!(p.days.drink && p.days.drink[d])); bweek.push(!!(p.days.bento && p.days.bento[d])); }
+      var dy = p.days || {}, td = t.date, run = 0, cd = td;
+      if (!(dy.bento && dy.bento[cd])) cd = addDays(cd, -1);
+      while (dy.bento && dy.bento[cd] && run < 60) { run++; cd = addDays(cd, -1); while ([0, 6].indexOf(new Date(cd + 'T00:00:00Z').getUTCDay()) >= 0) cd = addDays(cd, -1); }
+      var todayDone = { bento: !!(dy.bento && dy.bento[td]), drink: !!(dy.drink && dy.drink[td]), other: !!(dy.otherDays && dy.otherDays[td]), hero: !!(dy.heroDays && dy.heroDays[td]),
+        rec: !!(dy.recDays && dy.recDays[td]), adopted: p.adoptedList.some(function (a) { return str(a.at).slice(0, 10) === td; }) };
       return { ext: ext, name: p.name, earned: p.earned, spent: spent, balance: Math.max(0, p.earned - spent), level: li, levelName: LEVELS[li][1],
         levelAt: LEVELS[li][0], nextAt: nx ? nx[0] : null, nextName: nx ? nx[1] : '', breakdown: p.breakdown, week: week, today: t.date,
-        adopted: p.adoptedList.filter(function (a) { return a.at >= addDays(t.date, -14); }), recToday: !!(p.days.recDays && p.days.recDays[t.date]) };
+        adopted: p.adoptedList.filter(function (a) { return a.at >= addDays(t.date, -14); }), recToday: !!(p.days.recDays && p.days.recDays[t.date]),
+        todayDone: todayDone, bweek: bweek, run: run % 5, levels: LEVELS };
     }
     function play(p) {
       var ext = str(p.ext), game = str(p.game);
