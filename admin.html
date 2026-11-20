@@ -116,6 +116,7 @@ td.n,th.n{text-align:right}
 .sxpay{display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:8px 10px;margin-top:8px;border:2px solid #F0B3A0}.sxpay b{flex:1;color:#C0431F;font-size:17px}.sxpay button{background:#1D9E75;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:900}
 .sx-man{display:flex;gap:8px;max-width:420px;margin:12px auto 0}.sx-man input{flex:1;border-radius:12px;border:0;padding:10px;font-size:18px;text-align:center;letter-spacing:6px;text-transform:uppercase}.sx-man button{background:#fff;color:#3A2A1E;border-radius:12px;padding:0 16px;font-weight:900;white-space:nowrap}
 .sx-cnt{display:flex;gap:8px;max-width:420px;margin:12px auto 0}.sx-cnt div{flex:1;background:#2E2620;border-radius:12px;text-align:center;padding:6px;font-size:12px;color:#CDBFAE}.sx-cnt b{display:block;font-size:22px;color:#fff}
+.pqb{position:fixed;left:50%;bottom:16px;transform:translate(-50%,40px);opacity:0;background:#3A2A1E;color:#fff;font-weight:800;font-size:14px;border-radius:999px;padding:8px 16px;z-index:150;transition:.3s;pointer-events:none}.pqb.show{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
 <body>
@@ -431,7 +432,7 @@ $('sxGo').onclick=function(){var v=$('sxCode').value.trim();if(!v)return $('sxCo
 $('sxCode').onkeydown=function(e){if(e.key==='Enter')$('sxGo').click()};$('refresh').onclick=function(){loadPay()};
 function loadPay(){var id=$('pSel').value;if(!id){$('payList').innerHTML='<div class="pad muted">還沒有揪團</div>';$('kpis').innerHTML='';return}
   $('payList').innerHTML='<div class="loading"><img src="img/logo_frame.png" alt="">讀取中…</div>';
-  return api('adminGroup',{id:id}).then(function(r){CUR=r;drawPay()}).catch(function(e){toast(e.message,1)})}
+  return api('adminGroup',{id:id}).then(function(r){CUR=pqApply(r);drawPay()}).catch(function(e){toast(e.message,1)})}
 function drawPay(){
   var g=CUR,q=$('pExt').value.trim(),paid=0,un=0;g.people.forEach(function(p){paid+=p.total-p.unpaid;un+=p.unpaid});
   if(g.mode==='link'){
@@ -448,12 +449,26 @@ function drawPay(){
       '<div class="bt"><button class="collect" data-pay="'+esc(p.ext)+'">'+(p.paid?'✓ 已付 '+money(p.total):'收到 '+money(p.unpaid))+'</button><button class="pk'+(p.picked?' on':'')+'" data-pk="'+esc(p.ext)+'">'+(p.picked?'✓ 已領':'領取')+'</button><button data-open="'+esc(p.ext)+'">'+(openRows[p.ext]?'收合':'明細')+'</button></div>'+rows+'</div>';
   }).join(''):'<div class="pad muted">'+(q?'分機 '+esc(q)+' 沒有點餐':'還沒有人點餐')+'</div>';
 }
+// ---------- 收款／領取：排隊一筆一筆送，不會互相蓋掉 ----------
+var PQ=[],PQbusy=false;
+function pqApply(g){PQ.forEach(function(o){if(g&&g.id===o.gid)g.people.forEach(function(p){if(p.ext===o.ext){p[o.f]=o.v;if(o.f==='paid')p.unpaid=o.v?0:p.total}})});return g}
+function pqBadge(){var el=$('pqBadge');if(!el){el=document.createElement('div');el.id='pqBadge';el.className='pqb';document.body.appendChild(el)}
+  el.textContent=PQ.length?'☁️ 儲存中…還有 '+PQ.length+' 筆':'✓ 全部儲存好了';el.classList.toggle('show',true);clearTimeout(el._t);if(!PQ.length)el._t=setTimeout(function(){el.classList.remove('show')},1500)}
+function qSet(f,gid,ext,v,ok){PQ=PQ.filter(function(o){return !(o.gid===gid&&o.ext===ext&&o.f===f)});PQ.push({f:f,gid:gid,ext:ext,v:v,ok:ok,tries:0});pqApply(CUR);drawPay();pqBadge();pqRun()}
+function pqRun(){if(PQbusy||!PQ.length)return;PQbusy=true;var o=PQ[0];
+  api(o.f==='paid'?'setPaid':'setPicked',{groupId:o.gid,ext:o.ext,value:o.v}).then(function(r){
+    PQ.shift();if(o.ok)o.ok();if(CUR&&CUR.id===r.id){CUR=pqApply(r);drawPay()}
+  }).catch(function(err){o.tries++;
+    if(o.tries<3){return new Promise(function(res){setTimeout(res,1500*o.tries)})}
+    PQ.shift();toast('分機 '+o.ext+' 沒有存到：'+err.message+'，請再按一次',1);if(!PQ.length)loadPay();
+  }).then(function(){PQbusy=false;pqBadge();pqRun()})}
+addEventListener('beforeunload',function(e){if(PQ.length){e.preventDefault();e.returnValue='還有資料在儲存中'}});
 $('pExt').oninput=function(){if(CUR)drawPay()};
 $('payList').onclick=function(e){
   var b=e.target.closest('button');if(!b||!CUR)return;
   if(b.dataset.pay){var ext=b.dataset.pay,p=CUR.people.filter(function(x){return x.ext===ext})[0],v=!p.paid;
-    p.paid=v;p.unpaid=v?0:p.total;drawPay();api('setPaid',{groupId:CUR.id,ext:ext,value:v}).then(function(r){CUR=r;drawPay();if(v)toast('已收 '+money(p.total)+'，分機 '+ext)}).catch(function(err){toast(err.message,1);loadPay()})}
-  if(b.dataset.pk){var ex=b.dataset.pk,pp=CUR.people.filter(function(x){return x.ext===ex})[0],v2=!pp.picked;pp.picked=v2;drawPay();api('setPicked',{groupId:CUR.id,ext:ex,value:v2}).then(function(r){CUR=r;drawPay()}).catch(function(err){toast(err.message,1);loadPay()})}
+    var tot=p.total;qSet('paid',CUR.id,ext,v,function(){if(v)toast('已收 '+money(tot)+'，分機 '+ext)})}
+  if(b.dataset.pk){var ex=b.dataset.pk,pp=CUR.people.filter(function(x){return x.ext===ex})[0];qSet('picked',CUR.id,ex,!pp.picked)}
   if(b.dataset.open){openRows[b.dataset.open]=!openRows[b.dataset.open];drawPay()}
   if(b.dataset.dl){var id=b.dataset.dl;ask('確定刪除這一樣？','刪除').then(function(ok){if(ok)api('adminDeleteOrder',{groupId:CUR.id,id:id}).then(function(r){CUR=r;drawPay();toast('已刪除')})})}
   if(b.dataset.ed){var it=null,owner=null;CUR.people.forEach(function(p){p.items.forEach(function(i){if(i.id===b.dataset.ed){it=i;owner=p}})});openAO(it,owner)}
