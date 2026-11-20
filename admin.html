@@ -313,23 +313,17 @@ $('glist').onclick=function(e){var b=e.target.closest('[data-a]');if(!b)return;v
 $('copyToday').onclick=function(){var t=T(),list=GL.groups.filter(function(g){return (g.state==='open'||g.state==='upcoming')&&(g.kind!=='other'||g.endAt.slice(0,10)>=t.date)});
   if(!list.length)return toast('目前沒有進行中的揪團',1);showLine(lineText(list))};
 function pageUrl(){return location.href.replace(/admin\.html.*$/,'').replace(/[?#].*$/,'')+'?d='+T().date.replace(/-/g,'')}
-var COIN_INTRO_UNTIL='2026-11-24';
-var COIN_LINES=['🪙 點餐就送熊幣！畫面最下面的金色列可以查熊幣、玩扭蛋',
- '🎰 今天點完餐，記得去轉一下午餐扭蛋\n抽到大吉會灑彩帶，還有 TOM 的冷笑話等你 🐻',
- '🐻 你的分機現在是什麼框？\n銅框 → 銀框 → 金色閃光框 → 彩虹皇冠 👑\n每天一起點餐就能拿熊幣升級，看看誰先當上「湯姆熊傳說」！',
- '🪙 點完餐到畫面最下面的金色列，轉個午餐扭蛋，看看今天是大吉還是末吉～',
- '🔨 今天點餐拿熊幣，午休來打 TOM，20 秒挑戰你的手速！',
- '📸 下班路上看到好吃的？拍下菜單按「推薦新菜單」，被採用就有熊幣！',
- '🕵️ 徵求午餐探子！公司附近有私房好店，拍菜單推薦給 TOM 吧',
- '📸 吃膩了嗎？大家推薦的新菜單，管理員都會一家一家看喔',
- '🌟 推薦的店被選中開團，你就是今天的美食功臣！拍菜單就能推薦'];
-function coinLine(){var d=T().date;
-  if(d<COIN_INTRO_UNTIL)return '🪙 熊幣樂園開張囉！\n今天點便當 +1、點飲料 +1\n湊滿低消那一刻送出的人，再加 1 枚「成團功臣」\n熊幣可以玩午餐扭蛋、打 TOM，存越多等級越高，名字外框會變色喔！\n📸 在外面看到好吃的？按「推薦新菜單」拍下菜單，也能拿熊幣！';
-  var n=0;for(var i=0;i<d.length;i++)n+=d.charCodeAt(i);return COIN_LINES[n%COIN_LINES.length]}
+var COIN_LINES=['🪙 點餐拿熊幣，最下面金色列轉扭蛋',
+ '🐻 再拿幾枚熊幣，名字外框就升級了',
+ '🔨 午休來打 TOM，20 秒挑戰手速',
+ '📸 看到好吃的店？拍菜單推薦拿熊幣',
+ '🎰 今天的扭蛋是大吉還是末吉？',
+ '🌟 推薦的店被選中，你就是美食功臣'];
+function coinLine(){var d=T().date,n=0;for(var i=0;i<d.length;i++)n+=d.charCodeAt(i);return COIN_LINES[n%COIN_LINES.length]}
 function lineText(list){
   var thanks=[],t=T(),bd=list.filter(function(g){return g.kind!=='other'}).sort(function(x,y){return (x.kind==='bento'?0:1)-(y.kind==='bento'?0:1)}),ot=list.filter(function(g){return g.kind==='other'}),out=[];
   if(bd.length){out.push('🍱 今日午餐開團囉！'+md(t.date));bd.forEach(function(g){out.push('');out.push('【'+(g.kind==='bento'?'便當':'飲料')+'】'+g.title+(g.mode==='link'?'（線上點餐）':''));
-    out.push('⏰ '+g.endAt.slice(11,16)+(g.mode==='link'?' 截止':' 結單｜低消 '+(g.min?money(g.min):'無')));if(g.message)out.push(g.message)})}
+    out.push('⏰ '+g.endAt.slice(11,16)+(g.mode==='link'?' 截止':' 結單｜低消 '+(g.min?money(g.min):'無')));if(g.message)out.push('📌 '+g.message.replace(/^📌\s*/,''))})}
   bd.concat(ot).forEach(function(g){var r=g.shopId&&RECS.filter(function(x){return x.status==='adopted'&&x.shopId===g.shopId})[0];
     if(r){thanks.push('🌟 今天的「'+g.title+'」是分機 '+r.ext+(r.name?' '+r.name:'')+' 推薦的，謝謝美食探子！')}});
   ot.forEach(function(g){if(out.length)out.push('');out.push('✨ 揪團：'+(g.emoji?g.emoji+' ':'')+g.title);if(g.desc)out.push(g.desc);
