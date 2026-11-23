@@ -1,11 +1,21 @@
 // 節慶主題（做法 1：日期寫在這裡，時間到自動出現、過了自動恢復）
 // 預覽：網址加 ?theme=xmas（只在這次開啟有效），?theme=off 取消預覽
 window.LUNCH_THEME_SCHEDULE = [
+  { key: 'thanks', from: '11-24', to: '11-26' },
   { key: 'xmas', from: '12-01', to: '12-26' }
 ];
 window.LUNCH_THEMES = {
+  thanks: {
+    name: '🦃 感恩週', cls: 'tg', title: '🦃 感恩週・謝謝你一起揪團', target: '11-26',
+    count: '感恩節還有 {n} 天，謝謝每一位一起點餐的同事 🧡', today: '今天是感恩節，謝謝你讓午餐更熱鬧 🧡', after: '謝謝你讓午餐更熱鬧 🧡',
+    teaser: '🎄 12/1 TOM 準備了一個聖誕驚喜，敬請期待',
+    css: '.fest.tg{background:linear-gradient(120deg,#FFF1DE,#FBDDBA);color:#6B3412;border:1.5px solid #EBC49A;box-shadow:0 4px 0 #E7C9A5;padding:10px 12px}' +
+      '.fest.tg .tx b{display:block;font-size:15px;color:#7A3A12}.fest.tg small{color:#8A5A32;opacity:1}' +
+      '.fest.tg .tz{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #E2B98E;font-size:12px;font-weight:800;color:#7A1F2B}' +
+      '.fest.tg .lf{font-size:30px;flex:none;animation:lfsway 3s ease-in-out infinite;transform-origin:50% 0}@keyframes lfsway{50%{transform:rotate(-10deg)}}'
+  },
   xmas: {
-    name: '🎄 聖誕節', title: 'Merry Christmas', target: '12-25',
+    name: '🎄 聖誕節', cls: 'xm', snow: true, title: 'Merry Christmas', target: '12-25',
     count: '距離聖誕節還有 {n} 天・點小樹會發亮', today: '今天是聖誕節！TOM 祝你聖誕快樂', after: '聖誕快樂，新的一年也一起吃飯吧',
     tree: { balls: 70, lights: 50, camY: 2.6, camZ: 14, lookY: 2.55, fov: 28,
       pal: { pine: 0x173A2C, mint: 0xD9B26A, ringGlow: 0x6A4A10, lav: 0x7A1F2B, silver: 0xE2B85C, ball2: 0x9E2A3A, warm: 0xFFE3A0 } },
