@@ -1,10 +1,29 @@
 // 節慶主題（做法 1：日期寫在這裡，時間到自動出現、過了自動恢復）
 // 預覽：網址加 ?theme=xmas（只在這次開啟有效），?theme=off 取消預覽
 window.LUNCH_THEME_SCHEDULE = [
-  { key: 'thanks', from: '11-24', to: '11-26' },
+  { key: 'thanksday', from: '11-26', to: '11-26' },
+  { key: 'thanks', from: '11-24', to: '11-25' },
   { key: 'xmas', from: '12-01', to: '12-26' }
 ];
 window.LUNCH_THEMES = {
+  // 11/26 感恩節當天：整個首頁換成秋天的感覺，用 TOM & JOY 感恩節動畫當門面
+  thanksday: {
+    name: '🦃 感恩節', cls: 'td', noBanner: true, fall: 'leaf', intro: true,
+    hero: { src: 'img/fest/thanks-sq.mp4', poster: 'img/fest/thanks-sq.jpg' },
+    thanks: '🧡 謝謝你！感恩節快樂', big: '🎉 你讓大家成團了！感恩有你',
+    css: 'html.th-thanksday body{background:linear-gradient(180deg,#FCEBD3 0,#FBF3E6 420px,#FBF6EE 900px)}' +
+      'html.th-thanksday .hello .mw{display:none}' +
+      'html.th-thanksday .hello{align-items:center;gap:10px}' +
+      '.thero{position:relative;flex:none;width:min(42%,210px);aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#F6E2C6;border:2px solid #fff;box-shadow:0 5px 0 #E2B98E,0 10px 18px rgba(120,60,10,.16)}' +
+      '.thero img,.thero video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}' +
+      'html.th-thanksday .hello .bub{margin-bottom:0;border-color:#EBC49A}' +
+      'html.th-thanksday .cal .hd{background:#C9622A;box-shadow:inset 0 -3px 0 #E8A64A}' +
+      'html.th-thanksday .clk{background:linear-gradient(180deg,#FFE9C9,#F6BE78);box-shadow:0 6px 0 #D98F3E,0 10px 16px rgba(120,60,10,.18)}' +
+      'html.th-thanksday .clk .lb{color:#8A3A12}html.th-thanksday .clk .t{color:#6B2E0E}html.th-thanksday .clk .t .c{color:#C9622A}' +
+      'html.th-thanksday .cal{position:relative;overflow:visible}html.th-thanksday .cal:after{content:"🍁";position:absolute;right:-8px;top:-12px;font-size:22px;transform:rotate(18deg)}' +
+      'html.th-thanksday .gcard{position:relative}html.th-thanksday .gcard:after{content:"🍂";position:absolute;right:10px;top:6px;font-size:16px;opacity:.55;transform:rotate(-12deg);pointer-events:none}' +
+      'html.th-thanksday .gcard .mini i{background:linear-gradient(90deg,#E8A64A,#C9622A)!important}'
+  },
   thanks: {
     name: '🦃 感恩週', cls: 'tg', title: '🦃 感恩週・謝謝你一起揪團', target: '11-26',
     count: '感恩節還有 {n} 天，謝謝每一位一起點餐的同事 🧡', today: '今天是感恩節，謝謝你讓午餐更熱鬧 🧡', after: '謝謝你讓午餐更熱鬧 🧡',
@@ -12,6 +31,9 @@ window.LUNCH_THEMES = {
     css: '.fest.tg{background:linear-gradient(120deg,#FFF1DE,#FBDDBA);color:#6B3412;border:1.5px solid #EBC49A;box-shadow:0 4px 0 #E7C9A5;padding:10px 12px}' +
       '.fest.tg .tx b{display:block;font-size:15px;color:#7A3A12}.fest.tg small{color:#8A5A32;opacity:1}' +
       '.fest.tg .tz{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #E2B98E;font-size:12px;font-weight:800;color:#7A1F2B}' +
+      '.fest.tg .fvid{flex:none;width:92px;height:92px;border-radius:14px;overflow:hidden;padding:0;border:2px solid #fff;box-shadow:0 3px 0 #E2B98E;position:relative;background:#F6E2C6 center/cover;order:-1;cursor:pointer}' +
+      '.fest.tg .fvid video{width:100%;height:100%;object-fit:cover;display:block}.fest.tg .fvid .fp{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;font-size:11px;font-weight:900;padding:1px 6px}' +
+      '.fvbig{width:100%;border-radius:18px;display:block;background:#F6E2C6;aspect-ratio:1/1}' +
       '.fest.tg .lf{font-size:30px;flex:none;animation:lfsway 3s ease-in-out infinite;transform-origin:50% 0}@keyframes lfsway{50%{transform:rotate(-10deg)}}'
   },
   xmas: {
